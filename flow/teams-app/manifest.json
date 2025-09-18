@@ -27,14 +27,14 @@
     {
       "entityId": "flowcreator",
       "name": "Flow Creator",
-      "contentUrl": "https://172.16.16.107:3005",
-      "websiteUrl": "https://172.16.16.107:3005",
+      "contentUrl": "https://172.16.16.27:3005",
+      "websiteUrl": "https://172.16.16.27:3005",
       "scopes": ["personal"]
     }
   ],
   "configurableTabs": [
     {
-      "configurationUrl": "https://172.16.16.107:3005/teams/configure",
+      "configurationUrl": "https://172.16.16.27:3005/teams/configure",
       "canUpdateConfiguration": true,
       "scopes": ["team"]
     }
@@ -49,9 +49,9 @@
     ]
   },
   "permissions": ["identity", "messageTeamMembers"],
-  "validDomains": ["172.16.16.107", "localhost", "localhost:3000", "*.microsoftonline.com", "*.microsoft.com"],
+  "validDomains": ["172.16.16.27", "localhost", "localhost:3000", "*.microsoftonline.com", "*.microsoft.com"],
   "webApplicationInfo": {
     "id": "8682d5f9-bab2-45ba-b578-d7f7ab832120",
-    "resource": "api://172.16.16.107:3005/8682d5f9-bab2-45ba-b578-d7f7ab832120"
+    "resource": "api://172.16.16.27:3005/8682d5f9-bab2-45ba-b578-d7f7ab832120"
   }
 }

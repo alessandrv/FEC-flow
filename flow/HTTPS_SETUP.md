@@ -36,7 +36,7 @@ If you need to override the API URL, create a `.env.local` file in the flow dire
 
 ```bash
 # Default (Network HTTPS backend)
-NEXT_PUBLIC_API_URL=https://172.16.16.107:3001/api
+NEXT_PUBLIC_API_URL=https://172.16.16.27:3001/api
 
 # For local HTTPS backend
 NEXT_PUBLIC_API_URL=https://localhost:3001/api
@@ -67,7 +67,7 @@ cd backend
 npm run dev
 ```
 This will start the backend API on:
-- Network access: `https://172.16.16.107:3001`
+- Network access: `https://172.16.16.27:3001`
 - Local access: `https://localhost:3001`
 
 The backend now listens on all network interfaces (0.0.0.0), allowing access from other devices on the network.
@@ -82,11 +82,11 @@ The backend now listens on all network interfaces (0.0.0.0), allowing access fro
 ### Backend Network Access
 The backend is configured to:
 - Listen on all network interfaces (`0.0.0.0:3001`)
-- Accept CORS requests from both `localhost` and `172.16.16.107`
-- Provide network access via `https://172.16.16.107:3001`
+- Accept CORS requests from both `localhost` and `172.16.16.27`
+- Provide network access via `https://172.16.16.27:3001`
 
 ### Frontend Network Access
-- Frontend connects to backend via `https://172.16.16.107:3001/api`
+- Frontend connects to backend via `https://172.16.16.27:3001/api`
 - Can be accessed by other devices on the network
 
 ## Troubleshooting

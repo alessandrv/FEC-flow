@@ -22,7 +22,7 @@ const httpsOptions = {
 
 // Middleware
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || ['https://localhost:3005', 'https://172.16.16.107:3005', "https://172.16.16.27:3005"],
+  origin: process.env.CORS_ORIGIN || ['https://localhost:3005', 'https://172.16.16.27:3005', "https://172.16.16.27:3005"],
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
@@ -50,8 +50,8 @@ app.use('*', (req, res) => {
 
 https.createServer(httpsOptions, app).listen(PORT, HOST, () => {
   console.log(`HTTPS Server running on ${HOST}:${PORT}`);
-  console.log(`Health check: https://172.16.16.107:${PORT}/health`);
-  console.log(`API base URL: https://172.16.16.107:${PORT}/api`);
+  console.log(`Health check: https://172.16.16.27:${PORT}/health`);
+  console.log(`API base URL: https://172.16.16.27:${PORT}/api`);
   console.log(`Local access: https://localhost:${PORT}/api`);
 }); 
 
