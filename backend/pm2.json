@@ -1,0 +1,9 @@
+{
+  "apps": [
+    {
+      "name": "pm2-test-app",
+      "script": "server.js",
+      "watch": false
+    }
+  ]
+}

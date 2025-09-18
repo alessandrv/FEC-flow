@@ -1,0 +1,57 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.16/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.16",
+  "version": "1.0.1",
+  "id": "8682d5f9-bab2-45ba-b578-d7f7ab832120",
+  "packageName": "com.fecitalia.flowcreator",
+  "developer": {
+    "name": "Fec Italia",
+    "websiteUrl": "https://fecpos.it",
+    "privacyUrl": "https://fecpos.it/privacy",
+    "termsOfUseUrl": "https://fecpos.it/terms"
+  },
+  "name": {
+    "short": "Flow Creator",
+    "full": "Flow Creator for Teams"
+  },
+  "description": {
+    "short": "Create and manage flows in Teams",
+    "full": "Flow Creator allows you to create, edit, and manage workflows directly within Microsoft Teams. Streamline your business processes with an intuitive interface."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#6264A7",
+  "staticTabs": [
+    {
+      "entityId": "flowcreator",
+      "name": "Flow Creator",
+      "contentUrl": "https://172.16.16.107:3000",
+      "websiteUrl": "https://172.16.16.107:3000",
+      "scopes": ["personal"]
+    }
+  ],
+  "configurableTabs": [
+    {
+      "configurationUrl": "https://172.16.16.107:3000/teams/configure",
+      "canUpdateConfiguration": true,
+      "scopes": ["team"]
+    }
+  ],
+  "activities": {
+    "activityTypes": [
+      {
+        "type": "taskAssigned",
+        "description": "Flow Creator task assigned",
+        "templateText": "Flow Creator: {assignedTask}"
+      }
+    ]
+  },
+  "permissions": ["identity", "messageTeamMembers"],
+  "validDomains": ["172.16.16.107", "localhost", "localhost:3000", "*.microsoftonline.com", "*.microsoft.com"],
+  "webApplicationInfo": {
+    "id": "8682d5f9-bab2-45ba-b578-d7f7ab832120",
+    "resource": "api://172.16.16.107:3000/8682d5f9-bab2-45ba-b578-d7f7ab832120"
+  }
+}

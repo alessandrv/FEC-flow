@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+/* Edge label styling for flow editor */
+.react-flow__edge-text {
+    fill: #6b7280 !important; /* gray-500 - visible on both light and dark backgrounds */
+    font-size: 12px !important;
+    font-weight: 500 !important;
+}
+
+/* Edge label background for better readability in light theme */
+.react-flow__edge-text-bg {
+    fill: rgba(255, 255, 255, 0.9) !important;
+    stroke: rgba(0, 0, 0, 0.1) !important;
+    stroke-width: 1px !important;
+}
+
+/* Dark theme specific styles */
+@media (prefers-color-scheme: dark) {
+    .react-flow__edge-textbg {
+        fill: unset !important;
+    }
+    
+    .react-flow__edge-text {
+        fill: #d1d5db !important; /* gray-300 - better for dark backgrounds */
+    }
+    
+    .react-flow__edge-text-bg {
+        fill: rgba(0, 0, 0, 0.7) !important;
+        stroke: rgba(255, 255, 255, 0.2) !important;
+        stroke-width: 1px !important;
+    }
+}
+
+/* Support for manual dark class (if using class-based dark mode) */
+.dark .react-flow__edge-textbg {
+    fill: unset !important;
+}
+
+.dark .react-flow__edge-text {
+    fill: #d1d5db !important; /* gray-300 - better for dark backgrounds */
+}
+
+.dark .react-flow__edge-text-bg {
+    fill: rgba(0, 0, 0, 0.7) !important;
+    stroke: rgba(255, 255, 255, 0.2) !important;
+    stroke-width: 1px !important;
+}
+@keyframes deeplinkFlashBorder {
+    0% {
+        box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.0);
+        outline-color: #facc15;
+    }
+    25% {
+        box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.35);
+        outline-color: #fde047; /* yellow-300 */
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(234, 179, 8, 0.15);
+        outline-color: #facc15;
+    }
+    75% {
+        box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.35);
+        outline-color: #fde047;
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.0);
+        outline-color: #facc15;
+    }
+}
+
+.deeplink-flash-border {
+    animation: deeplinkFlashBorder 1.8s ease-in-out 50; /* run 3 cycles */
+    outline: 3px solid #facc15 !important; /* yellow-400 outer border */
+}
+
+
+@config "../tailwind.config.js"
+
+

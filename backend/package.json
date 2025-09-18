@@ -1,0 +1,23 @@
+{
+  "name": "flow-platform-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Flow Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "dev:https": "nodemon server.js",
+    "start:https": "NODE_ENV=production node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mysql2": "^3.6.5",
+    "node-fetch": "^3.3.2",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

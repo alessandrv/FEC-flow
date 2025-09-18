@@ -1,0 +1,66 @@
+# Unified Git Ignore for monorepo (flow + backend)
+
+# Dependencies
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Build / dist / Next.js
+.next/
+out/
+dist/
+build/
+.tmp
+.cache/
+
+# TypeScript
+*.tsbuildinfo
+
+# Coverage
+coverage
+.nyc_output
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Misc caches
+.vercel/
+.sentry/
+
+# Certificates / sensitive
+**/certificates/*.key
+**/certificates/*.csr
+**/certificates/*.srl
+
+# Generated assets
+sitemap.xml
+robots.txt
+
+# Debug / merge artifacts
+*.orig
+*.rej
+
+# Local data
+*.local.json
