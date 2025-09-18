@@ -1,7 +1,7 @@
 {
   "apps": [
     {
-      "name": "pm2-test-app",
+      "name": "flow-app-frontend",
       "script": "server.js",
       "watch": false
     }
