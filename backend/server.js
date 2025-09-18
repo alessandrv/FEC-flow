@@ -10,7 +10,7 @@ const groupsRouter = require('./routes/groups');
 const pool = require('./config/database');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3006;
 const HOST = process.env.HOST || '0.0.0.0'; // Listen on all network interfaces
 
 // SSL Certificate configuration
@@ -22,7 +22,7 @@ const httpsOptions = {
 
 // Middleware
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || ['https://localhost:3000', 'https://172.16.16.107:3000'],
+  origin: process.env.CORS_ORIGIN || ['https://localhost:3005', 'https://172.16.16.107:3005', "https://172.16.16.27:3005"],
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
