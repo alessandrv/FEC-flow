@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
         });
         
         // Check if token is for our app
-        const expectedAudience = `api://172.16.16.107:3000/${process.env.NEXT_PUBLIC_AZURE_CLIENT_ID}`;
+        const expectedAudience = `api://172.16.16.27:3005/${process.env.NEXT_PUBLIC_AZURE_CLIENT_ID}`;
         if (payload.aud !== expectedAudience) {
           console.log('⚠️ Token audience mismatch:', {
             expected: expectedAudience,

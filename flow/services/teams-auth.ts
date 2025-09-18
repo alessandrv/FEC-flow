@@ -121,7 +121,7 @@ export class TeamsAuthService {
   private async ssoExchange(options?: { silent?: boolean }): Promise<{ accessToken: string; account: AccountInfo | null }> {
     const silent = options?.silent ?? false;
     // Use Teams authentication with the correct Application ID URI as resource (scope is implied as access_as_user)
-    const resource = `api://172.16.16.107:3000/${process.env.NEXT_PUBLIC_AZURE_CLIENT_ID}`;
+    const resource = `api://172.16.16.107:3005/${process.env.NEXT_PUBLIC_AZURE_CLIENT_ID}`;
     const authToken = await microsoftTeams.authentication.getAuthToken({
       resources: [resource],
       silent,
@@ -633,7 +633,7 @@ export class TeamsAuthService {
   const fallbackAppId = '8682d5f9-bab2-45ba-b578-d7f7ab832120'; // Teams App ID from manifest
   const appId = process.env.NEXT_PUBLIC_TEAMS_APP_ID || fallbackAppId;
   const entityId = 'flowcreator'; // Matches manifest staticTabs.entityId; channel tab uses contentUrl directly
-    const contentUrl = typeof window !== 'undefined' ? window.location.origin : 'https://172.16.16.107:3000';
+    const contentUrl = typeof window !== 'undefined' ? window.location.origin : 'https://172.16.16.107:3005';
     const label = 'Flow Creator';
     return `https://teams.microsoft.com/l/entity/${appId}/${encodeURIComponent(entityId)}?webUrl=${encodeURIComponent(contentUrl)}&label=${encodeURIComponent(label)}`;
   }
@@ -657,7 +657,7 @@ export class TeamsAuthService {
   // New: Build deep link including flow/item/node to open the app at a specific step
   private async buildFlowDeepLink(flowId: string, itemId: string, nodeId?: string, teamId?: string, channelId?: string): Promise<string> {
     const appId = process.env.NEXT_PUBLIC_TEAMS_APP_ID || process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || '';
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://172.16.16.107:3000';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://172.16.16.107:3005';
     const label = 'Flow Creator';
     const query = `flowId=${encodeURIComponent(flowId)}&itemId=${encodeURIComponent(itemId)}${nodeId ? `&nodeId=${encodeURIComponent(nodeId)}` : ''}`;
     
@@ -722,7 +722,7 @@ export class TeamsAuthService {
 
   // Build a status URL that the app can check on open (optional)
   private buildStatusUrl(flowId: string, itemId: string, nodeId?: string): string {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://172.16.16.107:3000';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://172.16.16.107:3005';
     const url = `${origin}/api/flow-status?flowId=${encodeURIComponent(flowId)}&itemId=${encodeURIComponent(itemId)}${nodeId ? `&nodeId=${encodeURIComponent(nodeId)}` : ''}`;
     return url;
   }
