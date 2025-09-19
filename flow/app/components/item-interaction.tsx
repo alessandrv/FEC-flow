@@ -305,7 +305,9 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
 
   const results = await Promise.allSettled(actionableNodes.map(async (targetNode: any) => {
         // Resolve assignees per node
-        const respIds: string[] = targetNode.data?.responsibilities || (targetNode.data?.responsibility ? [targetNode.data.responsibility] : [])
+  // Prefer per-item assigned responsibilities (set at runtime on the item) over node-level defaults
+  const perItemAssignments: Record<string, any> = (updatedItemState?.data?.assignedResponsibilities) || (updatedItemState?.data?.assignedResponsibles) || {}
+  const respIds: string[] = perItemAssignments[targetNode.id] || targetNode.data?.responsibilities || (targetNode.data?.responsibility ? [targetNode.data.responsibility] : [])
         const assigneeEmails = (localGroups || [])
           .filter((g: any) => respIds.map(String).includes(String(g.id)))
           .flatMap((g: any) => g.members?.map((m: any) => String(m.email || '').trim()).filter(Boolean) || [])
@@ -2025,17 +2027,21 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
 
               <div className="flex gap-2 pt-4">
                 <Button color="primary" onPress={async () => {
-                  // Persist assignments to the flow
                   try {
+                    // Persist assignments to the specific item (per-item assignments)
                     const latestFlow = await apiService.getFlow(flow.id)
-                    const updatedNodes = latestFlow.nodes.map((fn: any) => {
-                      const awaiting = nodesAwaitingAssignment.find(a => a.id === fn.id)
-                      if (awaiting && awaiting._newResponsibilities) {
-                        fn.data = { ...fn.data, responsibilities: awaiting._newResponsibilities }
+                    const updatedItems = (latestFlow.items || []).map((it: any) => {
+                      if (String(it.id) !== String(item.id)) return it
+                      const existing = (it.data && it.data.assignedResponsibilities) ? { ...it.data.assignedResponsibilities } : {}
+                      for (const a of nodesAwaitingAssignment) {
+                        if (a._newResponsibilities) {
+                          existing[a.id] = a._newResponsibilities
+                        }
                       }
-                      return fn
+                      return { ...it, data: { ...(it.data || {}), assignedResponsibilities: existing } }
                     })
-                    const updatedFlow = { ...latestFlow, nodes: updatedNodes }
+
+                    const updatedFlow = { ...latestFlow, items: updatedItems }
                     await apiService.updateFlow(flow.id, {
                       name: updatedFlow.name,
                       description: updatedFlow.description,
