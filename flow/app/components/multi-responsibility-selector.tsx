@@ -190,9 +190,12 @@ export default function MultiResponsibilitySelector({ value, onChange }: MultiRe
                 <div
                   className="bg-content1 border border-default-200 rounded-lg shadow-lg overflow-y-auto backdrop-blur-sm"
                   style={dropdownStyle}
-                  onMouseDown={(e) => { e.stopPropagation() }}
-                  onClick={(e) => { e.stopPropagation() }}
-                  onPointerDown={(e) => { e.stopPropagation() }}
+                  // Stop propagation in capture phase so parent modal doesn't see this as outside click
+                  onMouseDownCapture={(e) => { e.stopPropagation() }}
+                  onPointerDownCapture={(e) => { e.stopPropagation() }}
+                  onClickCapture={(e) => { e.stopPropagation() }}
+                  role="dialog"
+                  aria-modal="true"
                   data-portal-dropdown
                 >
                   {availableGroups.map((group) => (
