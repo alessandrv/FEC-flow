@@ -581,10 +581,16 @@ export default function FlowEditor({ flow, onBack, onUpdateFlow, onDeleteFlow }:
     })
 
     if (nodesWithoutResponsibility.length > 0) {
-      alert(
-        `Please assign responsibility to all nodes (except convergence nodes). Missing: ${nodesWithoutResponsibility.map((n) => n.data.label).join(", ")}`,
+      // Allow saving even if some nodes have no responsibility assigned.
+      // Show a non-blocking warning so editors are aware.
+      setToastMessage(
+        t('flowEditor.missingResponsibilitiesWarning', { count: nodesWithoutResponsibility.length }) ||
+          `Warning: ${nodesWithoutResponsibility.length} nodes have no responsibility assigned. You can assign them later when completing parent nodes.`
       )
-      return
+      setToastType('warning')
+      setToastVisible(true)
+      window.setTimeout(() => setToastVisible(false), 6000)
+      // continue saving
     }
 
     const cleanNodes = nodes.map((node) => ({

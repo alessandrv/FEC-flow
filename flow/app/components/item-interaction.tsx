@@ -7,6 +7,7 @@ import "@xyflow/react/dist/style.css"
 
 import { Button, Card, CardBody, CardHeader, Input, Textarea, Select, SelectItem, Checkbox, Modal, ModalContent, ModalHeader, ModalBody } from "@heroui/react"
 import CustomNode from "./custom-node"
+import MultiResponsibilitySelector from "./multi-responsibility-selector"
 import { useMediaQuery } from "../hooks/use-media-query"
 import { useTranslation } from "../hooks/useTranslation"
 // New: Teams and Groups
@@ -38,6 +39,9 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
   const [formData, setFormData] = useState<Record<string, string | boolean>>({})
   const [selectedPath, setSelectedPath] = useState<string>("")
   const [isNodeModalOpen, setIsNodeModalOpen] = useState(false)
+  const [isAssignResponsibleModalOpen, setIsAssignResponsibleModalOpen] = useState(false)
+  const [nodesAwaitingAssignment, setNodesAwaitingAssignment] = useState<any[]>([])
+  const assignmentResumeRef = useRef<any>(null)
   const [selectedNodeForModal, setSelectedNodeForModal] = useState<any>(null)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isCompletingNode, setIsCompletingNode] = useState(false)
@@ -1054,7 +1058,30 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
       return
     }
 
-    const nodeNextNodes = getNextActualNodes(nodeId, flow.edges, flow.nodes)
+    // Fetch latest flow state first to make decisions based on freshest data
+    let latestFlow: any = flow
+    try {
+      latestFlow = await apiService.getFlow(flow.id)
+    } catch (e) {
+      // ignore and continue with current flow if fetch fails
+      console.warn('Failed to fetch latest flow for completion checks, using local flow snapshot', e)
+      latestFlow = flow
+    }
+
+    const nodeNextNodes = getNextActualNodes(nodeId, latestFlow.edges, latestFlow.nodes)
+    // If any next node has no responsible, prompt for assignment
+    const nextNodesNeedingResponsible = nodeNextNodes.filter((nextNode: any) => {
+      const resps = nextNode.data?.responsibilities || (nextNode.data?.responsibility ? [nextNode.data.responsibility] : [])
+      return (!resps || resps.length === 0)
+    })
+    if (nextNodesNeedingResponsible.length > 0) {
+      // Open modal to assign responsible group(s) for the next nodes.
+      setNodesAwaitingAssignment(nextNodesNeedingResponsible)
+      setIsAssignResponsibleModalOpen(true)
+      // Store the node being completed so we can resume after assignment
+      assignmentResumeRef.current = { nodeId, formData: { ...formData }, selectedPath }
+      return
+    }
     if (nodeToComplete.type === "conditional" && nodeNextNodes.length > 1 && !selectedPath) {
       setToastMessage(t("validation.selectPath"))
       setToastType('danger')
@@ -1067,7 +1094,6 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
     setIsUpdating(true)
         // Concurrency guard: fetch latest item state before proceeding
         try {
-          const latestFlow = await apiService.getFlow(flow.id)
           const latestItem = latestFlow.items.find((i: any) => i.id === item.id)
           if (latestItem) {
             // If the node is already completed or current node moved, refresh and abort
@@ -1967,6 +1993,89 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
             className={`pb-6`}
           >
             {selectedNodeForModal && renderNodeInteractionContent(selectedNodeForModal)}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+
+      {/* Assign Responsible Modal */}
+      <Modal
+        isOpen={isAssignResponsibleModalOpen}
+        onClose={() => { setIsAssignResponsibleModalOpen(false); setNodesAwaitingAssignment([]); assignmentResumeRef.current = null }}
+        size="lg"
+        scrollBehavior="inside"
+      >
+        <ModalContent>
+          <ModalHeader>
+            <h3>{t('items.assignResponsibleTitle') || 'Assign responsible for next steps'}</h3>
+          </ModalHeader>
+          <ModalBody>
+            <div className="space-y-4">
+              {nodesAwaitingAssignment.map((n: any) => (
+                <div key={n.id} className="p-3 border rounded">
+                  <div className="font-medium mb-2">{n.data?.label || n.id}</div>
+                  <MultiResponsibilitySelector
+                    value={n.data?.responsibilities || (n.data?.responsibility ? [n.data.responsibility] : [])}
+                    onChange={(vals: string[]) => {
+                      // Update local state first
+                      setNodesAwaitingAssignment((prev) => prev.map(p => p.id === n.id ? { ...p, _newResponsibilities: vals } : p))
+                    }}
+                  />
+                </div>
+              ))}
+
+              <div className="flex gap-2 pt-4">
+                <Button color="primary" onPress={async () => {
+                  // Persist assignments to the flow
+                  try {
+                    const latestFlow = await apiService.getFlow(flow.id)
+                    const updatedNodes = latestFlow.nodes.map((fn: any) => {
+                      const awaiting = nodesAwaitingAssignment.find(a => a.id === fn.id)
+                      if (awaiting && awaiting._newResponsibilities) {
+                        fn.data = { ...fn.data, responsibilities: awaiting._newResponsibilities }
+                      }
+                      return fn
+                    })
+                    const updatedFlow = { ...latestFlow, nodes: updatedNodes }
+                    await apiService.updateFlow(flow.id, {
+                      name: updatedFlow.name,
+                      description: updatedFlow.description,
+                      columns: updatedFlow.columns,
+                      nodes: updatedFlow.nodes,
+                      edges: updatedFlow.edges,
+                      items: updatedFlow.items,
+                      plannerTeamId: updatedFlow.plannerTeamId,
+                      plannerChannelId: updatedFlow.plannerChannelId,
+                      plannerPlanId: updatedFlow.plannerPlanId,
+                      plannerBucketId: updatedFlow.plannerBucketId,
+                      deadlines: updatedFlow.deadlines || null,
+                    })
+
+                    // Close modal and resume completion if any
+                    setIsAssignResponsibleModalOpen(false)
+                    setNodesAwaitingAssignment([])
+                    const resume = assignmentResumeRef.current
+                    if (resume) {
+                      // restore form data and continue completion
+                      setFormData(resume.formData || {})
+                      setSelectedPath(resume.selectedPath || "")
+                      // call completeNode for the stored nodeId
+                      assignmentResumeRef.current = null
+                      // small delay to allow state to settle
+                      setTimeout(() => { completeNode(resume.nodeId) }, 200)
+                    }
+                  } catch (e) {
+                    console.error('Failed to save responsibilities:', e)
+                    setToastMessage(t('items.saveResponsibilitiesFailed') || 'Failed to save responsibilities')
+                    setToastType('danger')
+                    setToastVisible(true)
+                    window.setTimeout(() => setToastVisible(false), 3000)
+                  }
+                }}>
+                  {t('common.save') || 'Save'}
+                </Button>
+                <Button variant="bordered" onPress={() => { setIsAssignResponsibleModalOpen(false); setNodesAwaitingAssignment([]); assignmentResumeRef.current = null }}>Cancel</Button>
+              </div>
+            </div>
           </ModalBody>
         </ModalContent>
       </Modal>
