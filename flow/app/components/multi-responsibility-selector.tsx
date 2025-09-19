@@ -1,9 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { createPortal } from "react-dom"
-import { X, Users, Plus, ChevronDown } from "lucide-react"
-import { Button, Chip } from "@heroui/react"
+import { X, Users, Plus } from "lucide-react"
+import { Button, Chip, Select, SelectItem } from "@heroui/react"
 import { useGroups } from "../providers"
 
 interface MultiResponsibilitySelectorProps {
@@ -14,55 +13,17 @@ interface MultiResponsibilitySelectorProps {
 export default function MultiResponsibilitySelector({ value, onChange }: MultiResponsibilitySelectorProps) {
   const { groups, loading: isLoading } = useGroups()
   const [selectedGroup, setSelectedGroup] = useState<string>("")
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const triggerRef = useRef<HTMLButtonElement | null>(null)
-  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties | null>(null)
+  // No local dropdown portal needed when using HeroUI Select
+  const [selectedGroupId, setSelectedGroupId] = useState<string>("")
 
-  const updateDropdownPosition = () => {
-    if (!triggerRef.current) return
-    const rect = triggerRef.current.getBoundingClientRect()
-    const maxHeight = 240 // 60 * 4
-    const spaceBelow = window.innerHeight - rect.bottom - 8
-    const spaceAbove = rect.top - 8
-    let top = rect.bottom + 4
-    let height: number | undefined
-    if (spaceBelow < 160 && spaceAbove > spaceBelow) {
-      // Open upwards if not enough space below
-      const possibleHeight = Math.min(maxHeight, spaceAbove)
-      height = possibleHeight
-      top = rect.top - possibleHeight - 4
-    } else if (spaceBelow < maxHeight) {
-      height = Math.min(maxHeight, spaceBelow)
-    } else {
-      height = maxHeight
-    }
-    setDropdownStyle({
-      position: 'fixed',
-      top,
-      left: rect.left,
-      width: rect.width,
-      maxHeight: height,
-      zIndex: 1000,
-    })
-  }
-
-  useEffect(() => {
-    if (isDropdownOpen) {
-      updateDropdownPosition()
-      window.addEventListener('resize', updateDropdownPosition)
-      window.addEventListener('scroll', updateDropdownPosition, true)
-      return () => {
-        window.removeEventListener('resize', updateDropdownPosition)
-        window.removeEventListener('scroll', updateDropdownPosition, true)
-      }
-    }
-  }, [isDropdownOpen])
+  // HeroUI Select will handle dropdown placement and interactions inside a Modal
 
   const addResponsibility = () => {
-    if (selectedGroup && !value.includes(selectedGroup)) {
-      onChange([...value, selectedGroup])
+    const toAdd = selectedGroupId || selectedGroup
+    if (toAdd && !value.includes(toAdd)) {
+      onChange([...value, toAdd])
       setSelectedGroup("")
-      setIsDropdownOpen(false)
+      setSelectedGroupId("")
     }
   }
 
@@ -71,12 +32,12 @@ export default function MultiResponsibilitySelector({ value, onChange }: MultiRe
   }
 
   const selectGroup = (groupId: string) => {
-    setSelectedGroup(groupId)
-    setIsDropdownOpen(false)
+  setSelectedGroup(groupId)
+  setSelectedGroupId(groupId)
   }
 
   const availableGroups = groups.filter((group) => !value.includes(group.id))
-  const selectedGroupData = groups.find((g) => g.id === selectedGroup)
+  const selectedGroupData = groups.find((g) => g.id === (selectedGroupId || selectedGroup))
 
   if (isLoading) {
     return <div className="text-sm text-default-500">Loading groups...</div>
@@ -163,58 +124,27 @@ export default function MultiResponsibilitySelector({ value, onChange }: MultiRe
         <div className="space-y-2">
           <label className="text-xs font-medium text-default-700">Add Group:</label>
           <div className="flex gap-2">
-            <div className="flex-1 relative">
-              {/* Custom Dropdown */}
-              <Button
-                ref={triggerRef as any}
-                variant="bordered"
-                className="w-full justify-between"
-                onPress={() => setIsDropdownOpen(!isDropdownOpen)}
-              >
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  {selectedGroupData ? (
-                    <>
-                      <span>{selectedGroupData.name}</span>
-                      <span className="text-xs text-default-500">({selectedGroupData.members.length} members)</span>
-                    </>
-                  ) : (
-                    <span>Select a group to add</span>
-                  )}
-                </div>
-                <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
-              </Button>
-
-              {/* Dropdown Menu */}
-              {isDropdownOpen && dropdownStyle && typeof window !== 'undefined' && createPortal(
-                <div
-                  className="bg-content1 border border-default-200 rounded-lg shadow-lg overflow-y-auto backdrop-blur-sm"
-                  style={dropdownStyle}
-                  // Stop propagation in capture phase so parent modal doesn't see this as outside click
-                  onMouseDownCapture={(e) => { e.stopPropagation() }}
-                  onPointerDownCapture={(e) => { e.stopPropagation() }}
-                  onClickCapture={(e) => { e.stopPropagation() }}
-                  role="dialog"
-                  aria-modal="true"
-                  data-portal-dropdown
+              <div className="flex-1">
+                <Select
+                  selectedKeys={selectedGroupId ? [selectedGroupId] : []}
+                  onSelectionChange={(keys) => {
+                    const k = Array.from(keys)[0] as string
+                    setSelectedGroupId(k || "")
+                    setSelectedGroup(k || "")
+                  }}
+                  placeholder="Select a group to add"
                 >
                   {availableGroups.map((group) => (
-                    <button
-                      key={group.id}
-                      className="w-full px-3 py-2 text-left hover:bg-default-100 transition-colors first:rounded-t-lg last:rounded-b-lg"
-                      onClick={() => selectGroup(group.id)}
-                    >
+                    <SelectItem key={group.id}>
                       <div className="flex items-center gap-2">
                         <Users className="w-3 h-3" />
                         <span>{group.name}</span>
                         <span className="text-xs text-default-500">({group.members.length} members)</span>
                       </div>
-                    </button>
+                    </SelectItem>
                   ))}
-                </div>,
-                document.body
-              )}
-            </div>
+                </Select>
+              </div>
             <Button
               onPress={addResponsibility}
               isDisabled={!selectedGroup}
@@ -232,8 +162,7 @@ export default function MultiResponsibilitySelector({ value, onChange }: MultiRe
         </div>
       )}
 
-      {/* Click outside to close dropdown */}
-      {isDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />}
+  {/* HeroUI Select handles its own overlay/interaction */}
 
       {/* Validation Message */}
       {value.length === 0 && <p className="text-xs text-danger">At least one responsible group is required</p>}
