@@ -22,7 +22,7 @@ const httpsOptions = {
 
 // Middleware
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || ['https://localhost:3005', 'https://172.16.16.27:3005', "https://172.16.16.27:3005"],
+  origin: process.env.CORS_ORIGIN || ['https://localhost:3005', 'https://172.16.16.107:3005', "https://172.16.16.27:3005"],
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));

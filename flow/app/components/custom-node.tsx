@@ -41,7 +41,8 @@ interface CustomNodeProps {
     itemData?: Record<string, any>
     isFlowDesigner?: boolean
     chosenPath?: string
-  isDeepLinked?: boolean
+    isDeepLinked?: boolean
+    delegateUser?: { id: string; name: string }
   }
   id: string
 }
@@ -73,6 +74,41 @@ const CustomNode = memo(({ data, id }: CustomNodeProps) => {
     { key: "textarea", label: "Textarea" },
     { key: "checkbox", label: "Checkbox" },
   ]
+
+  // For delegation node: Teams user search (real API)
+  const [delegateUser, setDelegateUser] = useState<any>(data.delegateUser || null)
+  const [teamsUserQuery, setTeamsUserQuery] = useState("")
+  const [teamsUserResults, setTeamsUserResults] = useState<any[]>([])
+  const [isTeamsUserLoading, setIsTeamsUserLoading] = useState(false)
+  const { searchUsers, isLoggedIn } = useTeamsAuth();
+  import { useTeamsAuth } from "../providers/teams-auth.tsx"
+  // Fetch Teams users when query changes (debounced)
+  useEffect(() => {
+    let active = true;
+    if (data.nodeType === "delegation" && teamsUserQuery.trim() && isLoggedIn) {
+      setIsTeamsUserLoading(true);
+      searchUsers(teamsUserQuery)
+        .then(results => {
+          if (active) {
+            setTeamsUserResults(
+              (results || []).map((u: any) => ({
+                id: u.id,
+                name: u.displayName || u.name || u.mail || u.userPrincipalName || "Unknown"
+              }))
+            );
+          }
+        })
+        .catch(() => {
+          if (active) setTeamsUserResults([]);
+        })
+        .finally(() => {
+          if (active) setIsTeamsUserLoading(false);
+        });
+    } else {
+      setTeamsUserResults([]);
+    }
+    return () => { active = false; };
+  }, [teamsUserQuery, data.nodeType, isLoggedIn, searchUsers]);
 
   useEffect(() => {
     if (isInputTypeDropdownOpen && dropdownTriggerRef.current) {
@@ -114,7 +150,7 @@ const CustomNode = memo(({ data, id }: CustomNodeProps) => {
 
   const getNodeColor = (nodeType: string) => {
     const baseClasses = "border-2 transition-all duration-300"
-    const clickableClasses = data.isClickable ? "cursor-pointer hover:shadow-lg hover:scale-105" : ""
+    .then((results: any[]) => {
     const disabledClasses = data.isDisabled ? "opacity-50" : ""
 
     // Priority: Completed > Active > Normal
@@ -174,6 +210,8 @@ const CustomNode = memo(({ data, id }: CustomNodeProps) => {
         return <Flag className="w-3 h-3 text-success-600" />
       case "convergence":
         return <Merge className="w-3 h-3 text-danger-600" />
+      case "delegation":
+        return <Users className="w-3 h-3 text-primary-600" />
       default:
         return null
     }
@@ -220,6 +258,7 @@ const CustomNode = memo(({ data, id }: CustomNodeProps) => {
         edges: data.nodeType === "conditional" ? edges : undefined,
         responsibilities,
         responsibility: undefined,
+        delegateUser: data.nodeType === "delegation" ? delegateUser : undefined,
       })
     }
     setIsConfigDialogOpen(false)
@@ -407,20 +446,7 @@ const CustomNode = memo(({ data, id }: CustomNodeProps) => {
                 <h2>Configure Node: {data.label}</h2>
                 <p className="text-sm text-default-500 font-normal">Configure node settings and input fields</p>
               </div>
-              <Button
-                isIconOnly
-                size="sm"
-                variant="light"
-                aria-label="Close"
-                onPress={() => {
-                  setIsInputTypeDropdownOpen(false)
-                  setIsResponsibilitiesDropdownOpen(false)
-                  setUiEpoch((v) => v + 1)
-                  setIsConfigDialogOpen(false)
-                }}
-              >
-                <X className="w-4 h-4" />
-              </Button>
+              
             </ModalHeader>
             <ModalBody className="pb-6">
               <Tabs
@@ -564,19 +590,59 @@ const CustomNode = memo(({ data, id }: CustomNodeProps) => {
                   </Tab>
                 )}
 
-                {data.nodeType !== "convergence" && (
-                  <Tab key="responsibilities" title="Responsibilities">
+                {data.nodeType === "delegation" ? (
+                  <Tab key="delegation" title="Delegation">
                     <div className="space-y-3">
                       <label className="text-sm font-medium flex items-center gap-2">
                         <Users className="w-4 h-4" />
-                        Responsabilità (Required)
+                        Delegate to Teams User
                       </label>
-                      <MultiResponsibilitySelector
-                        value={responsibilities}
-                        onChange={setResponsibilities}
+                      <Input
+                        label="Search Teams user"
+                        value={teamsUserQuery}
+                        onValueChange={setTeamsUserQuery}
+                        placeholder="Type name..."
+                        size="sm"
+                        isDisabled={!isLoggedIn}
                       />
+                      {isTeamsUserLoading && <div className="text-xs text-default-500">Loading...</div>}
+                      <div className="space-y-1">
+                        {teamsUserResults.map(user => (
+                          <Button
+                            key={user.id}
+                            size="sm"
+                            variant={delegateUser?.id === user.id ? "solid" : "light"}
+                            color="primary"
+                            className="w-full text-left"
+                            onPress={() => setDelegateUser(user)}
+                          >
+                            {user.name}
+                          </Button>
+                        ))}
+                        {teamsUserResults.length === 0 && !isTeamsUserLoading && teamsUserQuery.trim() && (
+                          <div className="text-xs text-default-500">No users found</div>
+                        )}
+                      </div>
+                      {delegateUser && (
+                        <div className="mt-2 text-xs text-success-700">Selected: {delegateUser.name}</div>
+                      )}
                     </div>
                   </Tab>
+                ) : (
+                  data.nodeType !== "convergence" && (
+                    <Tab key="responsibilities" title="Responsibilities">
+                      <div className="space-y-3">
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          <Users className="w-4 h-4" />
+                          Responsabilità (Required)
+                        </label>
+                        <MultiResponsibilitySelector
+                          value={responsibilities}
+                          onChange={setResponsibilities}
+                        />
+                      </div>
+                    </Tab>
+                  )
                 )}
               </Tabs>
 
