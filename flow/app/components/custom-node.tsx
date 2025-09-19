@@ -19,6 +19,7 @@ import {
 } from "@heroui/react"
 import ResponsibilityChip from "./responsibility-chip"
 import MultiResponsibilitySelector from "./multi-responsibility-selector"
+  import { useTeamsAuth } from "../providers/teams-auth"
 
 interface CustomNodeProps {
   data: {
@@ -81,7 +82,6 @@ const CustomNode = memo(({ data, id }: CustomNodeProps) => {
   const [teamsUserResults, setTeamsUserResults] = useState<any[]>([])
   const [isTeamsUserLoading, setIsTeamsUserLoading] = useState(false)
   const { searchUsers, isLoggedIn } = useTeamsAuth();
-  import { useTeamsAuth } from "../providers/teams-auth.tsx"
   // Fetch Teams users when query changes (debounced)
   useEffect(() => {
     let active = true;
@@ -150,7 +150,7 @@ const CustomNode = memo(({ data, id }: CustomNodeProps) => {
 
   const getNodeColor = (nodeType: string) => {
     const baseClasses = "border-2 transition-all duration-300"
-    .then((results: any[]) => {
+    const clickableClasses = data.isClickable ? "cursor-pointer hover:shadow-lg hover:scale-105" : ""
     const disabledClasses = data.isDisabled ? "opacity-50" : ""
 
     // Priority: Completed > Active > Normal
