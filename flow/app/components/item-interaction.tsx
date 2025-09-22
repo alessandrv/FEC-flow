@@ -270,9 +270,25 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
     try {
   const planId = (flow as any)?.plannerPlanId
   const bucketId = (flow as any)?.plannerBucketId
-  if (!isLoggedIn) return {}
+  
+  // Debug logging
+  if (process && process.env.NODE_ENV !== 'production') {
+    console.log('[Planner] createPlannerTaskForNext called', {
+      isLoggedIn,
+      planId,
+      bucketId,
+      itemId: updatedItemState?.id,
+      completedNode: justCompletedNode?.id
+    })
+  }
+  
+  if (!isLoggedIn) {
+    console.log('[Planner] User not logged in, skipping task creation')
+    return {}
+  }
       if (!planId || !bucketId) {
         // Informative toast to configure Planner destination
+        console.log('[Planner] Missing plan or bucket configuration')
         setToastMessage(t('items.plannerNotConfigured') || 'Planner destination not configured for this flow. Open Settings > Planner Destination to pick a Plan and Bucket.')
         setToastType('info')
         setToastVisible(true)
@@ -284,15 +300,29 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
       const nextActiveNodes = getAllActiveNodesFor(updatedItemState)
       let actionableNodes = (nextActiveNodes || []).filter((n: any) => n.type !== 'convergence')
 
+      // Debug logging
+      if (process && process.env.NODE_ENV !== 'production') {
+        console.log('[Planner] Active nodes found:', {
+          totalActiveNodes: nextActiveNodes?.length || 0,
+          actionableNodes: actionableNodes.length,
+          nodeIds: actionableNodes.map((n: any) => n.id)
+        })
+      }
+
       // Duplicate prevention: filter out nodes that already have a planner task mapping
       const existingMap = (updatedItemState?.data?.plannerTasks) || {}
       const beforeCount = actionableNodes.length
       actionableNodes = actionableNodes.filter((n: any) => !existingMap[n.id])
       const afterCount = actionableNodes.length
       if (process && process.env.NODE_ENV !== 'production') {
-        console.log('[Planner] Duplicate prevention', { beforeCount, afterCount, skipped: beforeCount - afterCount })
+        console.log('[Planner] Duplicate prevention', { beforeCount, afterCount, skipped: beforeCount - afterCount, existingMap })
       }
-  if (!actionableNodes || actionableNodes.length === 0) return {}
+  if (!actionableNodes || actionableNodes.length === 0) {
+    if (process && process.env.NODE_ENV !== 'production') {
+      console.log('[Planner] No actionable nodes left after filtering')
+    }
+    return {}
+  }
 
       // Ensure groups are loaded once
       let localGroups: Group[] = Array.isArray(groups) ? groups : []
@@ -308,10 +338,28 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
   // Prefer per-item assigned responsibilities (set at runtime on the item) over node-level defaults
   const perItemAssignments: Record<string, any> = (updatedItemState?.data?.assignedResponsibilities) || (updatedItemState?.data?.assignedResponsibles) || {}
   const respIds: string[] = perItemAssignments[targetNode.id] || targetNode.data?.responsibilities || (targetNode.data?.responsibility ? [targetNode.data.responsibility] : [])
+  
+        // Debug logging for assignee resolution
+        if (process && process.env.NODE_ENV !== 'production') {
+          console.log('[Planner] Resolving assignees for node', targetNode.id, {
+            perItemAssignments: perItemAssignments[targetNode.id],
+            nodeResponsibilities: targetNode.data?.responsibilities,
+            finalRespIds: respIds
+          })
+        }
+  
         const assigneeEmails = (localGroups || [])
           .filter((g: any) => respIds.map(String).includes(String(g.id)))
           .flatMap((g: any) => g.members?.map((m: any) => String(m.email || '').trim()).filter(Boolean) || [])
         const uniqueEmails = Array.from(new Set(assigneeEmails)).slice(0, 10)
+
+        if (process && process.env.NODE_ENV !== 'production') {
+          console.log('[Planner] Email resolution for node', targetNode.id, {
+            matchingGroups: localGroups.filter((g: any) => respIds.map(String).includes(String(g.id))).length,
+            totalEmails: assigneeEmails.length,
+            uniqueEmails: uniqueEmails.length
+          })
+        }
 
         const assigneeIds: string[] = []
         for (const em of uniqueEmails) {
@@ -1071,8 +1119,25 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
     }
 
     const nodeNextNodes = getNextActualNodes(nodeId, latestFlow.edges, latestFlow.nodes)
+    
+    // For conditional nodes, check if path is selected first
+    if (nodeToComplete.type === "conditional" && nodeNextNodes.length > 1 && !selectedPath) {
+      setToastMessage(t("validation.selectPath"))
+      setToastType('danger')
+      setToastVisible(true)
+      window.setTimeout(() => setToastVisible(false), 3000)
+      return
+    }
+
+    // Filter nodes to check for responsibilities based on node type and selected path
+    let nodesToCheck = nodeNextNodes
+    if (nodeToComplete.type === "conditional" && selectedPath) {
+      // For conditional nodes with a selected path, only check nodes on that path
+      nodesToCheck = nodeNextNodes.filter((nextNode: any) => nextNode.edgeId === selectedPath)
+    }
+
     // If any next node has no responsible, prompt for assignment
-    const nextNodesNeedingResponsible = nodeNextNodes.filter((nextNode: any) => {
+    const nextNodesNeedingResponsible = nodesToCheck.filter((nextNode: any) => {
       const resps = nextNode.data?.responsibilities || (nextNode.data?.responsibility ? [nextNode.data.responsibility] : [])
       return (!resps || resps.length === 0)
     })
@@ -1082,13 +1147,6 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
       setIsAssignResponsibleModalOpen(true)
       // Store the node being completed so we can resume after assignment
       assignmentResumeRef.current = { nodeId, formData: { ...formData }, selectedPath }
-      return
-    }
-    if (nodeToComplete.type === "conditional" && nodeNextNodes.length > 1 && !selectedPath) {
-      setToastMessage(t("validation.selectPath"))
-      setToastType('danger')
-      setToastVisible(true)
-      window.setTimeout(() => setToastVisible(false), 3000)
       return
     }
 
