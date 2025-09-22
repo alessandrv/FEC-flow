@@ -1176,13 +1176,11 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
     
     if (process && process.env.NODE_ENV !== 'production') {
       console.log('[Assignment Check] Nodes needing assignment:', nextNodesNeedingResponsible.map(n => n.id))
-      console.log('[Assignment Check] Bypass flag:', (window as any).__bypassAssignmentCheck)
+      console.log('[Assignment Check] Is resuming from assignment?', !!assignmentResumeRef.current)
     }
     
-    // Check bypass flag to prevent loops during resume
-    const shouldBypass = (window as any).__bypassAssignmentCheck
-    
-    if (nextNodesNeedingResponsible.length > 0 && !shouldBypass) {
+    // Only show modal if we're not currently in a resume flow
+    if (nextNodesNeedingResponsible.length > 0) {
       // Open modal to assign responsible group(s) for the next nodes.
       setNodesAwaitingAssignment(nextNodesNeedingResponsible)
       setIsAssignResponsibleModalOpen(true)
@@ -2235,18 +2233,10 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
                       setFormData(resume.formData || {})
                       setSelectedPath(resume.selectedPath || "")
                       
-                      // Add a flag to bypass assignment check on resume
-                      const originalBypassCheck = (window as any).__bypassAssignmentCheck
-                      ;(window as any).__bypassAssignmentCheck = true
-                      
-                      // small delay to allow state to settle
+                      // Continue with completion - the updated assignments should prevent the modal from reopening
                       setTimeout(() => { 
                         completeNode(resume.nodeId)
-                        // Restore the flag after completion
-                        setTimeout(() => {
-                          ;(window as any).__bypassAssignmentCheck = originalBypassCheck
-                        }, 100)
-                      }, 200)
+                      }, 100) // Shorter delay
                     }
                   } catch (e) {
                     console.error('Failed to save responsibilities:', e)
