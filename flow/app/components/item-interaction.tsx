@@ -1176,9 +1176,13 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
     
     if (process && process.env.NODE_ENV !== 'production') {
       console.log('[Assignment Check] Nodes needing assignment:', nextNodesNeedingResponsible.map(n => n.id))
+      console.log('[Assignment Check] Bypass flag:', (window as any).__bypassAssignmentCheck)
     }
     
-    if (nextNodesNeedingResponsible.length > 0) {
+    // Check bypass flag to prevent loops during resume
+    const shouldBypass = (window as any).__bypassAssignmentCheck
+    
+    if (nextNodesNeedingResponsible.length > 0 && !shouldBypass) {
       // Open modal to assign responsible group(s) for the next nodes.
       setNodesAwaitingAssignment(nextNodesNeedingResponsible)
       setIsAssignResponsibleModalOpen(true)
@@ -2214,24 +2218,35 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
                     setIsAssignResponsibleModalOpen(false)
                     setNodesAwaitingAssignment([])
                     const resume = assignmentResumeRef.current
+                    assignmentResumeRef.current = null // Clear this immediately to prevent loops
+                    
                     if (resume) {
-                      // Refetch the updated flow to get the latest item state
-                      const refreshedFlow = await apiService.getFlow(flow.id)
-                      const refreshedItem = refreshedFlow.items?.find((it: any) => String(it.id) === String(item.id))
+                      console.log('[Assignment] Saved assignments, resuming completion...')
                       
-                      if (refreshedItem) {
-                        // Update the local item with the saved assignments
-                        Object.assign(item, refreshedItem)
+                      // Update the local item state with the assignments we just saved
+                      const updatedItem = updatedItems.find((it: any) => String(it.id) === String(item.id))
+                      if (updatedItem) {
+                        // Update the item reference directly
+                        Object.assign(item, updatedItem)
+                        console.log('[Assignment] Updated local item with assignments:', updatedItem.data?.assignedResponsibilities)
                       }
                       
                       // restore form data and continue completion
                       setFormData(resume.formData || {})
                       setSelectedPath(resume.selectedPath || "")
-                      // call completeNode for the stored nodeId
-                      assignmentResumeRef.current = null
+                      
+                      // Add a flag to bypass assignment check on resume
+                      const originalBypassCheck = (window as any).__bypassAssignmentCheck
+                      ;(window as any).__bypassAssignmentCheck = true
                       
                       // small delay to allow state to settle
-                      setTimeout(() => { completeNode(resume.nodeId) }, 200)
+                      setTimeout(() => { 
+                        completeNode(resume.nodeId)
+                        // Restore the flag after completion
+                        setTimeout(() => {
+                          ;(window as any).__bypassAssignmentCheck = originalBypassCheck
+                        }, 100)
+                      }, 200)
                     }
                   } catch (e) {
                     console.error('Failed to save responsibilities:', e)
