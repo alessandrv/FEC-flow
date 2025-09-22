@@ -1284,6 +1284,7 @@ export default function FlowTable({ flow, onBack, onEditFlow, onUpdateFlow, open
     ...(initialNode?.data?.inputs?.map((input: any) => input.label) || []),
     t('items.currentNodes'),
     t('items.responsibility'),
+    t('items.assignedUsers') || 'Assigned Users',
     ...flow.columns,
     t('common.created'),
   t('common.lastUpdate'),
@@ -1375,6 +1376,8 @@ export default function FlowTable({ flow, onBack, onEditFlow, onUpdateFlow, open
                           ? "currentNode"
                           : header === t('items.responsibility')
                             ? "responsibility"
+                            : header === (t('items.assignedUsers') || 'Assigned Users')
+                              ? "assignedUsers"
                             : header === t('common.created')
                               ? "created"
                               : header === t('common.lastUpdate')
@@ -1383,7 +1386,7 @@ export default function FlowTable({ flow, onBack, onEditFlow, onUpdateFlow, open
                                 ? "actions"
                                 : header
 
-                    const isFilterable = ![t('common.actions')].includes(header)
+                    const isFilterable = ![t('common.actions'), t('items.assignedUsers') || 'Assigned Users'].includes(header)
                     const filterType = getColumnFilterType(columnKey)
                     const currentFilter = filters[columnKey]
                     const hasFilters =
@@ -1558,6 +1561,35 @@ export default function FlowTable({ flow, onBack, onEditFlow, onUpdateFlow, open
                               ) : (
                                 <span className="text-default-400 text-xs">{t('items.noActiveNodes')}</span>
                               )}
+                            </div>
+                          </div>
+
+                          {/* Assigned Users */}
+                          <div>
+                            <div className="space-y-1">
+                              {(() => {
+                                const assignedUsers = item.data?.assignedResponsibilities
+                                if (!assignedUsers || Object.keys(assignedUsers).length === 0) {
+                                  return <span className="text-default-400 text-xs">No runtime assignments</span>
+                                }
+                                
+                                return (
+                                  <div className="space-y-1">
+                                    {Object.entries(assignedUsers).map(([nodeId, userIds]) => {
+                                      const node = flow.nodes.find(n => n.id === nodeId)
+                                      const nodeName = node?.data?.label || nodeId
+                                      return (
+                                        <div key={nodeId} className="text-xs">
+                                          <div className="font-medium text-default-600">{nodeName}:</div>
+                                          <div className="pl-2 text-default-500">
+                                            {Array.isArray(userIds) ? `${userIds.length} user(s)` : 'Invalid data'}
+                                          </div>
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                )
+                              })()}
                             </div>
                           </div>
 
