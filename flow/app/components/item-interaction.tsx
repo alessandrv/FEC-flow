@@ -8,6 +8,7 @@ import "@xyflow/react/dist/style.css"
 import { Button, Card, CardBody, CardHeader, Input, Textarea, Select, SelectItem, Checkbox, Modal, ModalContent, ModalHeader, ModalBody } from "@heroui/react"
 import CustomNode from "./custom-node"
 import MultiResponsibilitySelector from "./multi-responsibility-selector"
+import { UserSearch } from "./user-search"
 import { useMediaQuery } from "../hooks/use-media-query"
 import { useTranslation } from "../hooks/useTranslation"
 // New: Teams and Groups
@@ -337,34 +338,45 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
         // Resolve assignees per node
   // Prefer per-item assigned responsibilities (set at runtime on the item) over node-level defaults
   const perItemAssignments: Record<string, any> = (updatedItemState?.data?.assignedResponsibilities) || (updatedItemState?.data?.assignedResponsibles) || {}
-  const respIds: string[] = perItemAssignments[targetNode.id] || targetNode.data?.responsibilities || (targetNode.data?.responsibility ? [targetNode.data.responsibility] : [])
+  const perItemUserIds: string[] = perItemAssignments[targetNode.id] || []
+  const nodeGroupIds: string[] = targetNode.data?.responsibilities || (targetNode.data?.responsibility ? [targetNode.data.responsibility] : [])
   
         // Debug logging for assignee resolution
         if (process && process.env.NODE_ENV !== 'production') {
           console.log('[Planner] Resolving assignees for node', targetNode.id, {
-            perItemAssignments: perItemAssignments[targetNode.id],
-            nodeResponsibilities: targetNode.data?.responsibilities,
-            finalRespIds: respIds
-          })
-        }
-  
-        const assigneeEmails = (localGroups || [])
-          .filter((g: any) => respIds.map(String).includes(String(g.id)))
-          .flatMap((g: any) => g.members?.map((m: any) => String(m.email || '').trim()).filter(Boolean) || [])
-        const uniqueEmails = Array.from(new Set(assigneeEmails)).slice(0, 10)
-
-        if (process && process.env.NODE_ENV !== 'production') {
-          console.log('[Planner] Email resolution for node', targetNode.id, {
-            matchingGroups: localGroups.filter((g: any) => respIds.map(String).includes(String(g.id))).length,
-            totalEmails: assigneeEmails.length,
-            uniqueEmails: uniqueEmails.length
+            perItemUserIds,
+            nodeGroupIds,
+            hasPerItemAssignments: perItemUserIds.length > 0
           })
         }
 
         const assigneeIds: string[] = []
-        for (const em of uniqueEmails) {
-          const uid = await resolveUserIdByEmail(em)
-          if (uid) assigneeIds.push(uid)
+        
+        if (perItemUserIds.length > 0) {
+          // Use per-item user IDs directly (these are already Teams user IDs)
+          assigneeIds.push(...perItemUserIds.slice(0, 10))
+          if (process && process.env.NODE_ENV !== 'production') {
+            console.log('[Planner] Using per-item user IDs:', assigneeIds)
+          }
+        } else if (nodeGroupIds.length > 0) {
+          // Fall back to resolving from groups
+          const assigneeEmails = (localGroups || [])
+            .filter((g: any) => nodeGroupIds.map(String).includes(String(g.id)))
+            .flatMap((g: any) => g.members?.map((m: any) => String(m.email || '').trim()).filter(Boolean) || [])
+          const uniqueEmails = Array.from(new Set(assigneeEmails)).slice(0, 10)
+
+          if (process && process.env.NODE_ENV !== 'production') {
+            console.log('[Planner] Group-based email resolution for node', targetNode.id, {
+              matchingGroups: localGroups.filter((g: any) => nodeGroupIds.map(String).includes(String(g.id))).length,
+              totalEmails: assigneeEmails.length,
+              uniqueEmails: uniqueEmails.length
+            })
+          }
+
+          for (const em of uniqueEmails) {
+            const uid = await resolveUserIdByEmail(em)
+            if (uid) assigneeIds.push(uid)
+          }
         }
 
         // Title prefix taken from initial node first input value, else item id
@@ -1138,6 +1150,14 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
 
     // If any next node has no responsible, prompt for assignment
     const nextNodesNeedingResponsible = nodesToCheck.filter((nextNode: any) => {
+      // Check per-item assignments first, then node-level responsibilities
+      const perItemAssignments = (item?.data?.assignedResponsibilities) || {}
+      const perItemResp = perItemAssignments[nextNode.id]
+      if (perItemResp && perItemResp.length > 0) {
+        return false // Node already has per-item assignment
+      }
+      
+      // Fall back to node-level responsibilities
       const resps = nextNode.data?.responsibilities || (nextNode.data?.responsibility ? [nextNode.data.responsibility] : [])
       return (!resps || resps.length === 0)
     })
@@ -2073,27 +2093,79 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
               {nodesAwaitingAssignment.map((n: any) => (
                 <div key={n.id} className="p-3 border rounded">
                   <div className="font-medium mb-2">{n.data?.label || n.id}</div>
-                  <MultiResponsibilitySelector
-                    value={n.data?.responsibilities || (n.data?.responsibility ? [n.data.responsibility] : [])}
-                    onChange={(vals: string[]) => {
-                      // Update local state first
-                      setNodesAwaitingAssignment((prev) => prev.map(p => p.id === n.id ? { ...p, _newResponsibilities: vals } : p))
+                  <div className="text-sm text-default-600 mb-3">
+                    Search and select users to assign responsibility for this step:
+                  </div>
+                  <UserSearch
+                    onUserSelect={(user) => {
+                      // Store selected users for this node
+                      const currentUsers = n._newAssignedUsers || []
+                      const isAlreadyAdded = currentUsers.some((u: any) => u.id === user.id)
+                      if (!isAlreadyAdded) {
+                        const updatedUsers = [...currentUsers, user]
+                        setNodesAwaitingAssignment((prev) => 
+                          prev.map(p => p.id === n.id ? { ...p, _newAssignedUsers: updatedUsers } : p)
+                        )
+                      }
                     }}
+                    selectedUsers={n._newAssignedUsers || []}
+                    placeholder="Search for users to assign..."
                   />
+                  {/* Display selected users */}
+                  {n._newAssignedUsers && n._newAssignedUsers.length > 0 && (
+                    <div className="mt-3">
+                      <div className="text-sm font-medium mb-2">Selected users:</div>
+                      <div className="space-y-1">
+                        {n._newAssignedUsers.map((user: any, idx: number) => (
+                          <div key={user.id} className="flex items-center justify-between p-2 bg-default-50 rounded text-sm">
+                            <span>{user.displayName} ({user.mail || user.userPrincipalName})</span>
+                            <Button
+                              isIconOnly
+                              size="sm"
+                              variant="light"
+                              color="danger"
+                              onPress={() => {
+                                const updatedUsers = n._newAssignedUsers.filter((_: any, i: number) => i !== idx)
+                                setNodesAwaitingAssignment((prev) => 
+                                  prev.map(p => p.id === n.id ? { ...p, _newAssignedUsers: updatedUsers } : p)
+                                )
+                              }}
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
 
               <div className="flex gap-2 pt-4">
                 <Button color="primary" onPress={async () => {
                   try {
+                    // Validate that all nodes have at least one user assigned
+                    const missingAssignments = nodesAwaitingAssignment.filter(n => 
+                      !n._newAssignedUsers || n._newAssignedUsers.length === 0
+                    )
+                    
+                    if (missingAssignments.length > 0) {
+                      setToastMessage('Please assign at least one user to each step')
+                      setToastType('danger')
+                      setToastVisible(true)
+                      window.setTimeout(() => setToastVisible(false), 3000)
+                      return
+                    }
+
                     // Persist assignments to the specific item (per-item assignments)
                     const latestFlow = await apiService.getFlow(flow.id)
                     const updatedItems = (latestFlow.items || []).map((it: any) => {
                       if (String(it.id) !== String(item.id)) return it
                       const existing = (it.data && it.data.assignedResponsibilities) ? { ...it.data.assignedResponsibilities } : {}
                       for (const a of nodesAwaitingAssignment) {
-                        if (a._newResponsibilities) {
-                          existing[a.id] = a._newResponsibilities
+                        if (a._newAssignedUsers && a._newAssignedUsers.length > 0) {
+                          // Store user IDs for this node
+                          existing[a.id] = a._newAssignedUsers.map((u: any) => u.id)
                         }
                       }
                       return { ...it, data: { ...(it.data || {}), assignedResponsibilities: existing } }
