@@ -1153,20 +1153,44 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
       // Check per-item assignments first, then node-level responsibilities
       const perItemAssignments = (item?.data?.assignedResponsibilities) || {}
       const perItemResp = perItemAssignments[nextNode.id]
+      const nodeResp = nextNode.data?.responsibilities || (nextNode.data?.responsibility ? [nextNode.data.responsibility] : [])
+      
+      // Debug logging
+      if (process && process.env.NODE_ENV !== 'production') {
+        console.log('[Assignment Check] Node', nextNode.id, {
+          perItemResp,
+          nodeResp,
+          hasPerItem: perItemResp && perItemResp.length > 0,
+          hasNodeLevel: nodeResp && nodeResp.length > 0,
+          needsAssignment: (!perItemResp || perItemResp.length === 0) && (!nodeResp || nodeResp.length === 0)
+        })
+      }
+      
       if (perItemResp && perItemResp.length > 0) {
         return false // Node already has per-item assignment
       }
       
       // Fall back to node-level responsibilities
-      const resps = nextNode.data?.responsibilities || (nextNode.data?.responsibility ? [nextNode.data.responsibility] : [])
-      return (!resps || resps.length === 0)
+      return (!nodeResp || nodeResp.length === 0)
     })
+    
+    if (process && process.env.NODE_ENV !== 'production') {
+      console.log('[Assignment Check] Nodes needing assignment:', nextNodesNeedingResponsible.map(n => n.id))
+    }
+    
     if (nextNodesNeedingResponsible.length > 0) {
       // Open modal to assign responsible group(s) for the next nodes.
       setNodesAwaitingAssignment(nextNodesNeedingResponsible)
       setIsAssignResponsibleModalOpen(true)
       // Store the node being completed so we can resume after assignment
       assignmentResumeRef.current = { nodeId, formData: { ...formData }, selectedPath }
+      
+      // Debug feedback
+      setToastMessage(`Assignment needed for ${nextNodesNeedingResponsible.length} node(s): ${nextNodesNeedingResponsible.map(n => n.data?.label || n.id).join(', ')}`)
+      setToastType('info')
+      setToastVisible(true)
+      window.setTimeout(() => setToastVisible(false), 4000)
+      
       return
     }
 
@@ -2191,11 +2215,21 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
                     setNodesAwaitingAssignment([])
                     const resume = assignmentResumeRef.current
                     if (resume) {
+                      // Refetch the updated flow to get the latest item state
+                      const refreshedFlow = await apiService.getFlow(flow.id)
+                      const refreshedItem = refreshedFlow.items?.find((it: any) => String(it.id) === String(item.id))
+                      
+                      if (refreshedItem) {
+                        // Update the local item with the saved assignments
+                        Object.assign(item, refreshedItem)
+                      }
+                      
                       // restore form data and continue completion
                       setFormData(resume.formData || {})
                       setSelectedPath(resume.selectedPath || "")
                       // call completeNode for the stored nodeId
                       assignmentResumeRef.current = null
+                      
                       // small delay to allow state to settle
                       setTimeout(() => { completeNode(resume.nodeId) }, 200)
                     }
