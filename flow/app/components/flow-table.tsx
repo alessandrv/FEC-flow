@@ -21,6 +21,7 @@ import {
 } from "@heroui/react"
 import ItemInteraction from "./item-interaction"
 import ResponsibilityChip from "./responsibility-chip"
+import UserChip from "./user-chip"
 import { useTranslation } from "../hooks/useTranslation"
 import { useRouter } from "next/navigation"
 import { useTeamsAuth } from "../providers/teams-auth"
@@ -1284,7 +1285,6 @@ export default function FlowTable({ flow, onBack, onEditFlow, onUpdateFlow, open
     ...(initialNode?.data?.inputs?.map((input: any) => input.label) || []),
     t('items.currentNodes'),
     t('items.responsibility'),
-    t('items.assignedUsers') || 'Assigned Users',
     ...flow.columns,
     t('common.created'),
   t('common.lastUpdate'),
@@ -1376,8 +1376,6 @@ export default function FlowTable({ flow, onBack, onEditFlow, onUpdateFlow, open
                           ? "currentNode"
                           : header === t('items.responsibility')
                             ? "responsibility"
-                            : header === (t('items.assignedUsers') || 'Assigned Users')
-                              ? "assignedUsers"
                             : header === t('common.created')
                               ? "created"
                               : header === t('common.lastUpdate')
@@ -1386,7 +1384,7 @@ export default function FlowTable({ flow, onBack, onEditFlow, onUpdateFlow, open
                                 ? "actions"
                                 : header
 
-                    const isFilterable = ![t('common.actions'), t('items.assignedUsers') || 'Assigned Users'].includes(header)
+                    const isFilterable = ![t('common.actions')].includes(header)
                     const filterType = getColumnFilterType(columnKey)
                     const currentFilter = filters[columnKey]
                     const hasFilters =
@@ -1548,48 +1546,34 @@ export default function FlowTable({ flow, onBack, onEditFlow, onUpdateFlow, open
                               {item.status === "completed" ? (
                                 <span className="text-xs">-</span>
                               ) : currentNodesInfo.length > 0 ? (
-                                currentNodesInfo.map((nodeInfo, nodeIndex) => (
-                                  <div key={nodeIndex} className="flex flex-wrap gap-1">
-                                    {nodeInfo.responsibilities.map((respId: string, respIndex: number) => (
-                                      <ResponsibilityChip key={`${nodeIndex}-${respIndex}`} groupId={respId} />
-                                    ))}
-                                    {nodeInfo.responsibilities.length === 0 && (
-                                      <span className="text-default-400 text-xs">{t('items.notAssigned')}</span>
-                                    )}
-                                  </div>
-                                ))
+                                currentNodesInfo.map((nodeInfo, nodeIndex) => {
+                                  // Get per-item user assignments for this node
+                                  const assignedUsers = item.data?.assignedResponsibilities?.[nodeInfo.nodeId] || []
+                                  const hasGroupResponsibilities = nodeInfo.responsibilities.length > 0
+                                  const hasUserAssignments = assignedUsers.length > 0
+                                  
+                                  return (
+                                    <div key={nodeIndex} className="flex flex-wrap gap-1">
+                                      {/* Show group responsibility chips */}
+                                      {nodeInfo.responsibilities.map((respId: string, respIndex: number) => (
+                                        <ResponsibilityChip key={`group-${nodeIndex}-${respIndex}`} groupId={respId} />
+                                      ))}
+                                      
+                                      {/* Show user assignment chips */}
+                                      {assignedUsers.map((user: any, userIndex: number) => (
+                                        <UserChip key={`user-${nodeIndex}-${userIndex}`} user={user} />
+                                      ))}
+                                      
+                                      {/* Show "not assigned" only if neither groups nor users are assigned */}
+                                      {!hasGroupResponsibilities && !hasUserAssignments && (
+                                        <span className="text-default-400 text-xs">{t('items.notAssigned')}</span>
+                                      )}
+                                    </div>
+                                  )
+                                })
                               ) : (
                                 <span className="text-default-400 text-xs">{t('items.noActiveNodes')}</span>
                               )}
-                            </div>
-                          </div>
-
-                          {/* Assigned Users */}
-                          <div>
-                            <div className="space-y-1">
-                              {(() => {
-                                const assignedUsers = item.data?.assignedResponsibilities
-                                if (!assignedUsers || Object.keys(assignedUsers).length === 0) {
-                                  return <span className="text-default-400 text-xs">No runtime assignments</span>
-                                }
-                                
-                                return (
-                                  <div className="space-y-1">
-                                    {Object.entries(assignedUsers).map(([nodeId, userIds]) => {
-                                      const node = flow.nodes.find(n => n.id === nodeId)
-                                      const nodeName = node?.data?.label || nodeId
-                                      return (
-                                        <div key={nodeId} className="text-xs">
-                                          <div className="font-medium text-default-600">{nodeName}:</div>
-                                          <div className="pl-2 text-default-500">
-                                            {Array.isArray(userIds) ? `${userIds.length} user(s)` : 'Invalid data'}
-                                          </div>
-                                        </div>
-                                      )
-                                    })}
-                                  </div>
-                                )
-                              })()}
                             </div>
                           </div>
 

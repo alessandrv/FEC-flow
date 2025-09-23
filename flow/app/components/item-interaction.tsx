@@ -338,7 +338,9 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
         // Resolve assignees per node
   // Prefer per-item assigned responsibilities (set at runtime on the item) over node-level defaults
   const perItemAssignments: Record<string, any> = (updatedItemState?.data?.assignedResponsibilities) || (updatedItemState?.data?.assignedResponsibles) || {}
-  const perItemUserIds: string[] = perItemAssignments[targetNode.id] || []
+  const perItemUsers: any[] = perItemAssignments[targetNode.id] || []
+  // Handle both new user object format and legacy string IDs
+  const perItemUserIds: string[] = perItemUsers.map(u => typeof u === 'object' ? u.id : u)
   const nodeGroupIds: string[] = targetNode.data?.responsibilities || (targetNode.data?.responsibility ? [targetNode.data.responsibility] : [])
   
         // Debug logging for assignee resolution
@@ -2190,8 +2192,13 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
                       const existing = (it.data && it.data.assignedResponsibilities) ? { ...it.data.assignedResponsibilities } : {}
                       for (const a of nodesAwaitingAssignment) {
                         if (a._newAssignedUsers && a._newAssignedUsers.length > 0) {
-                          // Store user IDs for this node
-                          existing[a.id] = a._newAssignedUsers.map((u: any) => u.id)
+                          // Store user objects with names for this node
+                          existing[a.id] = a._newAssignedUsers.map((u: any) => ({
+                            id: u.id,
+                            displayName: u.displayName,
+                            givenName: u.givenName,
+                            surname: u.surname
+                          }))
                         }
                       }
                       return { ...it, data: { ...(it.data || {}), assignedResponsibilities: existing } }
