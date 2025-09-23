@@ -52,7 +52,6 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
   const [groupColor, setGroupColor] = useState("primary")
   const [acceptAny, setAcceptAny] = useState<boolean>(false)
   const [members, setMembers] = useState<Array<{ name: string; email: string; id?: string }>>([])
-  const [useTeamsSearch, setUseTeamsSearch] = useState(true)
   const [newMemberName, setNewMemberName] = useState("")
   const [newMemberEmail, setNewMemberEmail] = useState("")
   // Team selection for Planner tasks
@@ -240,6 +239,20 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
           </p>
         </ModalHeader>
         <ModalBody>
+          {!isLoggedIn ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Users className="w-16 h-16 text-default-300 mb-4" />
+              <h3 className="text-lg font-semibold text-default-600 mb-2">Teams Integration Required</h3>
+              <p className="text-default-500 mb-6 max-w-md">
+                Group management requires Microsoft Teams integration to search and manage users from your organization.
+              </p>
+              <div className="p-4 bg-warning-50 border border-warning-200 rounded-lg max-w-md">
+                <p className="text-sm text-warning-700">
+                  Please log in with Teams to access group management features.
+                </p>
+              </div>
+            </div>
+          ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Groups List */}
             <div className="space-y-4">
@@ -278,17 +291,7 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
                           <span className="font-medium">{group.name}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          {isLoggedIn && (
-                            <Button
-                              isIconOnly
-                              variant="light"
-                              size="sm"
-                              onPress={() => notifyGroup(group)}
-                              title="Send Teams notification"
-                            >
-                              <Mail className="w-3 h-3" />
-                            </Button>
-                          )}
+                       
                           <Button
                             isIconOnly
                             variant="light"
@@ -351,91 +354,7 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
                       placeholder="Enter group name"
                     />
 
-                    {/* Team selection for Planner tasks */}
-                    <div>
-                      <label className="text-sm font-medium flex items-center gap-2 mb-2">
-                        <Users className="w-4 h-4" />
-                        Associated Team for Planner Tasks
-                      </label>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="bordered"
-                          className="flex-1 justify-between"
-                          onPress={async () => {
-                            if (!isLoggedIn) {
-                              alert('Log in with Teams to pick a team')
-                              return
-                            }
-                            // Toggle inline picker and fetch on first open
-                            const opening = !isTeamPickerOpen
-                            setIsTeamPickerOpen(opening)
-                            if (opening && teams.length === 0) {
-                              try {
-                                setIsLoadingTeams(true)
-                                const list = await getUserTeams()
-                                setTeams(list)
-                              } catch (e) {
-                                console.error('Failed to load teams', e)
-                                alert('Failed to load teams. Ensure Graph permissions are granted.')
-                              } finally {
-                                setIsLoadingTeams(false)
-                              }
-                            }
-                          }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4" />
-                            {selectedTeam ? (
-                              <span className="truncate">{selectedTeam.displayName}</span>
-                            ) : (
-                              <span>Select a Team</span>
-                            )}
-                          </div>
-                        </Button>
-                        {selectedTeam && (
-                          <Button isIconOnly variant="light" onPress={() => setSelectedTeam(null)} title="Clear">
-                            <X className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                      {isTeamPickerOpen && (
-                        <div className="mt-2 border rounded-md overflow-hidden">
-                          <div className="p-2 border-b bg-content2">
-                            <Input
-                              size="sm"
-                              value={teamQuery}
-                              onValueChange={setTeamQuery}
-                              placeholder="Search teams..."
-                            />
-                          </div>
-                          <div className="max-h-56 overflow-y-auto">
-                            {isLoadingTeams ? (
-                              <div className="p-3 text-xs text-default-500">Loading your Teams…</div>
-                            ) : filteredTeams.length === 0 ? (
-                              <div className="p-3 text-xs text-default-500">No teams found</div>
-                            ) : (
-                              filteredTeams.map(t => (
-                                <button
-                                  key={t.id}
-                                  className="w-full text-left px-3 py-2 hover:bg-default-100 flex items-center gap-2"
-                                  onClick={() => {
-                                    setSelectedTeam(t)
-                                    setIsTeamPickerOpen(false)
-                                  }}
-                                >
-                                  <Users className="w-4 h-4" />
-                                  <span className="truncate">{t.displayName}</span>
-                                </button>
-                              ))
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="text-xs text-default-500 mt-1">
-                        Optional. Tasks will be created in the Planner plan owned by this Team's M365 Group.
-                      </div>
-                    </div>
+                    
 
                     <div>
                       <label className="text-sm font-medium flex items-center gap-2 mb-2">
@@ -497,63 +416,24 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
                     <div className="border-t pt-4">
                       <div className="flex items-center justify-between mb-4">
                         <label className="text-sm font-medium">Add Members</label>
-                        {isLoggedIn && (
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              size="sm"
-                              isSelected={useTeamsSearch}
-                              onValueChange={setUseTeamsSearch}
-                            />
-                            <span className="text-xs text-default-500">Teams Search</span>
-                          </div>
-                        )}
                       </div>
 
-                      {useTeamsSearch && isLoggedIn ? (
-                        <div className="space-y-3">
-                          <UserSearch
-                            onUserSelect={handleUserSelect}
-                            selectedUsers={members.filter(m => m.id).map(m => ({ 
-                              id: m.id!, 
-                              displayName: m.name, 
-                              mail: m.email,
-                              userPrincipalName: m.email
-                            }))}
-                            placeholder="Search for users in your organization..."
-                          />
-                          <div className="text-xs text-default-500 flex items-center gap-1">
-                            <UserCheck className="w-3 h-3" />
-                            Search and select users from your Teams organization
-                          </div>
+                      <div className="space-y-3">
+                        <UserSearch
+                          onUserSelect={handleUserSelect}
+                          selectedUsers={members.filter(m => m.id).map(m => ({ 
+                            id: m.id!, 
+                            displayName: m.name, 
+                            mail: m.email,
+                            userPrincipalName: m.email
+                          }))}
+                          placeholder="Search for users in your organization..."
+                        />
+                        <div className="text-xs text-default-500 flex items-center gap-1">
+                          <UserCheck className="w-3 h-3" />
+                          Search and select users from your Teams organization
                         </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-2 gap-2">
-                            <Input
-                              value={newMemberName}
-                              onValueChange={setNewMemberName}
-                              placeholder="Member name"
-                              size="sm"
-                            />
-                            <Input
-                              type="email"
-                              value={newMemberEmail}
-                              onValueChange={setNewMemberEmail}
-                              placeholder="member@example.com"
-                              size="sm"
-                            />
-                          </div>
-                          <Button
-                            onPress={addManualMember}
-                            size="sm"
-                            className="w-full"
-                            isDisabled={!newMemberName.trim() || !newMemberEmail.trim()}
-                            startContent={<UserPlus className="w-3 h-3" />}
-                          >
-                            Add Member Manually
-                          </Button>
-                        </div>
-                      )}
+                      </div>
                     </div>
 
                     <div>
@@ -611,6 +491,7 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
               )}
             </div>
           </div>
+          )}
         </ModalBody>
       </ModalContent>
     </Modal>
