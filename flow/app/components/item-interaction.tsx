@@ -2134,15 +2134,15 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
             <h3>{t('items.assignResponsibleTitle')}</h3>
           </ModalHeader>
           <ModalBody className="max-h-[70vh] overflow-y-auto">
-            <div className="space-y-4 pb-4">
+            <div className="space-y-6 pb-8">
               <p className="text-sm text-default-600">{t('items.assignResponsibleDescription')}</p>
               
               {nodesAwaitingAssignment.map((n: any) => (
-                <Card key={n.id} className="shadow-sm">
+                <Card key={n.id} className="shadow-sm overflow-visible">
                   <CardHeader className="pb-2">
                     <h4 className="font-medium">{n.data?.label || n.id}</h4>
                   </CardHeader>
-                  <CardBody className="pt-0">
+                  <CardBody className="pt-0 overflow-visible">
                     <UserSearch
                       onUserSelect={(user) => {
                         // Store selected users for this node
