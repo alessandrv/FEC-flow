@@ -1549,24 +1549,24 @@ export default function FlowTable({ flow, onBack, onEditFlow, onUpdateFlow, open
                                 currentNodesInfo.map((nodeInfo, nodeIndex) => {
                                   // Get per-item user assignments for this node
                                   const assignedUsers = item.data?.assignedResponsibilities?.[nodeInfo.nodeId] || []
-                                  const hasGroupResponsibilities = nodeInfo.responsibilities.length > 0
                                   const hasUserAssignments = assignedUsers.length > 0
                                   
                                   return (
                                     <div key={nodeIndex} className="flex flex-wrap gap-1">
-                                      {/* Show group responsibility chips */}
-                                      {nodeInfo.responsibilities.map((respId: string, respIndex: number) => (
-                                        <ResponsibilityChip key={`group-${nodeIndex}-${respIndex}`} groupId={respId} />
-                                      ))}
-                                      
-                                      {/* Show user assignment chips */}
-                                      {assignedUsers.map((user: any, userIndex: number) => (
-                                        <UserChip key={`user-${nodeIndex}-${userIndex}`} user={user} />
-                                      ))}
-                                      
-                                      {/* Show "not assigned" only if neither groups nor users are assigned */}
-                                      {!hasGroupResponsibilities && !hasUserAssignments && (
-                                        <span className="text-default-400 text-xs">{t('items.notAssigned')}</span>
+                                      {/* Show user assignment chips INSTEAD of group chips if users are assigned */}
+                                      {hasUserAssignments ? (
+                                        assignedUsers.map((user: any, userIndex: number) => (
+                                          <UserChip key={`user-${nodeIndex}-${userIndex}`} user={user} />
+                                        ))
+                                      ) : (
+                                        /* Show group responsibility chips only if no users assigned */
+                                        nodeInfo.responsibilities.length > 0 ? (
+                                          nodeInfo.responsibilities.map((respId: string, respIndex: number) => (
+                                            <ResponsibilityChip key={`group-${nodeIndex}-${respIndex}`} groupId={respId} />
+                                          ))
+                                        ) : (
+                                          <span className="text-default-400 text-xs">{t('items.notAssigned')}</span>
+                                        )
                                       )}
                                     </div>
                                   )
