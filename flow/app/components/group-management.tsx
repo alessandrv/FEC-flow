@@ -22,6 +22,7 @@ import { UserSearch } from "./user-search"
 import { useTeamsAuth } from "../providers/teams-auth"
 import { User } from "../../services/teams-auth"
 import type { Team } from "../../services/teams-auth"
+import { useTranslation } from "../hooks/useTranslation"
 
 interface GroupManagementProps {
   isOpen: boolean
@@ -29,21 +30,22 @@ interface GroupManagementProps {
 }
 
 const colorOptions = [
-  { name: "Blue", value: "primary" },
-  { name: "Green", value: "success" },
-  { name: "Purple", value: "secondary" },
-  { name: "Red", value: "danger" },
-  { name: "Orange", value: "warning" },
-  { name: "Yellow", value: "yellow" },
-  { name: "Pink", value: "pink" },
-  { name: "Indigo", value: "indigo" },
-  { name: "Emerald", value: "emerald" },
-  { name: "Rose", value: "rose" },
-  { name: "Cyan", value: "cyan" },
-  { name: "Gray", value: "default" },
+  { name: "groups.colors.blue", value: "primary" },
+  { name: "groups.colors.green", value: "success" },
+  { name: "groups.colors.purple", value: "secondary" },
+  { name: "groups.colors.red", value: "danger" },
+  { name: "groups.colors.orange", value: "warning" },
+  { name: "groups.colors.yellow", value: "yellow" },
+  { name: "groups.colors.pink", value: "pink" },
+  { name: "groups.colors.indigo", value: "indigo" },
+  { name: "groups.colors.emerald", value: "emerald" },
+  { name: "groups.colors.rose", value: "rose" },
+  { name: "groups.colors.cyan", value: "cyan" },
+  { name: "groups.colors.gray", value: "default" },
 ]
 
 export default function GroupManagement({ isOpen, onClose }: GroupManagementProps) {
+  const { t } = useTranslation()
   const { groups, refreshGroups } = useGroups()
   const { isLoggedIn, sendNotification, getUserTeams } = useTeamsAuth()
   const [editingGroup, setEditingGroup] = useState<any>(null)
@@ -114,7 +116,7 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(newMemberEmail)) {
-      alert("Please enter a valid email address")
+      alert(t("groups.validEmailRequired"))
       return
     }
 
@@ -128,7 +130,7 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
       setNewMemberName("")
       setNewMemberEmail("")
     } else {
-      alert("This user is already added to the group")
+      alert(t("groups.userAlreadyAdded"))
     }
   }
 
@@ -138,12 +140,12 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
 
   const saveGroup = async () => {
     if (!groupName.trim()) {
-      alert("Please enter a group name")
+      alert(t("groups.groupNameRequired"))
       return
     }
 
     if (members.length === 0) {
-      alert("Please add at least one member to the group")
+      alert(t("groups.atLeastOneMemberRequired"))
       return
     }
 
@@ -167,19 +169,19 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
       cancelEdit()
     } catch (error) {
       console.error('Failed to save group:', error)
-      alert('Failed to save group. Please try again.')
+      alert(t("groups.saveGroupFailed"))
     }
   }
 
   const deleteGroup = async (groupId: string) => {
-    if (confirm("Are you sure you want to delete this group?")) {
+    if (confirm(t("groups.deleteGroupConfirm"))) {
       try {
         await apiService.deleteGroup(groupId)
         // Refresh groups from context
         await refreshGroups()
       } catch (error) {
         console.error('Failed to delete group:', error)
-        alert('Failed to delete group. Please try again.')
+        alert(t("groups.deleteGroupFailed"))
       }
     }
   }
@@ -198,11 +200,11 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
 
   const notifyGroup = async (group: any) => {
     if (!isLoggedIn) {
-      alert("Please log in with Teams to send notifications")
+      alert(t("groups.loginToSendNotifications"))
       return
     }
 
-    const message = `You have been assigned a new task in the Flow Creator application. Please check your assigned workflows.`
+    const message = t("groups.notificationMessage")
     
     try {
       for (const member of group.members) {
@@ -210,10 +212,10 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
           await sendNotification(member.id, message)
         }
       }
-      alert(`Notification sent to ${group.members.length} group members`)
+      alert(t("groups.notificationSent", { count: group.members.length }))
     } catch (error) {
       console.error('Failed to send notifications:', error)
-      alert('Failed to send notifications. Please try again.')
+      alert(t("groups.notificationFailed"))
     }
   }
 
@@ -232,23 +234,23 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
         <ModalHeader className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            <span>Manage User Groups</span>
+            <span>{t("groups.manage")}</span>
           </div>
           <p className="text-sm text-default-500 font-normal">
-            Create and manage groups of users responsible for completing tasks
+            {t("groups.description")}
           </p>
         </ModalHeader>
         <ModalBody>
           {!isLoggedIn ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Users className="w-16 h-16 text-default-300 mb-4" />
-              <h3 className="text-lg font-semibold text-default-600 mb-2">Teams Integration Required</h3>
+              <h3 className="text-lg font-semibold text-default-600 mb-2">{t("groups.teamsIntegrationRequired")}</h3>
               <p className="text-default-500 mb-6 max-w-md">
-                Group management requires Microsoft Teams integration to search and manage users from your organization.
+                {t("groups.teamsIntegrationDescription")}
               </p>
               <div className="p-4 bg-warning-50 border border-warning-200 rounded-lg max-w-md">
                 <p className="text-sm text-warning-700">
-                  Please log in with Teams to access group management features.
+                  {t("groups.teamsLoginRequired")}
                 </p>
               </div>
             </div>
@@ -257,14 +259,14 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
             {/* Groups List */}
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">Groups</h3>
+                <h3 className="text-lg font-semibold">{t("groups.title")}</h3>
                 <Button
                   onPress={startCreateGroup}
                   size="sm"
                   color="primary"
                   startContent={<Plus className="w-4 h-4" />}
                 >
-                  New Group
+                  {t("groups.newGroup")}
                 </Button>
               </div>
 
@@ -315,7 +317,7 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
                     <CardBody className="pt-0">
                       <div className="flex items-center gap-2 text-sm text-default-500">
                         <Users className="w-3 h-3" />
-                        <span>{group.members.length} members</span>
+                        <span>{t("groups.membersCount", { count: group.members.length })}</span>
                       </div>
                       <div className="mt-2 space-y-1">
                         {group.members.slice(0, 2).map((member: any, index: number) => (
@@ -325,7 +327,7 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
                         ))}
                         {group.members.length > 2 && (
                           <div className="text-xs text-default-400">
-                            +{group.members.length - 2} more
+                            {t("groups.moreMembers", { count: group.members.length - 2 })}
                           </div>
                         )}
                       </div>
@@ -340,7 +342,7 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
               {editingGroup || isCreateMode ? (
                 <>
                   <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-semibold">{isCreateMode ? "Create New Group" : "Edit Group"}</h3>
+                    <h3 className="text-lg font-semibold">{isCreateMode ? t("groups.createNewGroup") : t("groups.editGroup")}</h3>
                     <Button variant="light" onPress={cancelEdit} isIconOnly>
                       <X className="w-4 h-4" />
                     </Button>
@@ -348,10 +350,10 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
 
                   <div className="space-y-4">
                     <Input
-                      label="Group Name"
+                      label={t("groups.groupName")}
                       value={groupName}
                       onValueChange={setGroupName}
-                      placeholder="Enter group name"
+                      placeholder={t("groups.enterGroupName")}
                     />
 
                     
@@ -359,7 +361,7 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
                     <div>
                       <label className="text-sm font-medium flex items-center gap-2 mb-2">
                         <Palette className="w-4 h-4" />
-                        Group Color
+                        {t("groups.groupColor")}
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {colorOptions.map((color) => (
@@ -370,7 +372,7 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
                             color={color.value === "yellow" || color.value === "pink" ? "default" : (color.value as any)}
                             variant={groupColor === color.value ? "solid" : "bordered"}
                             onPress={() => setGroupColor(color.value)}
-                            title={color.name}
+                            title={t(color.name)}
                             className={
                               ["yellow", "pink", "teal", "indigo", "emerald", "rose", "amber", "cyan", "violet"].includes(color.value)
                                 ? `${
@@ -408,14 +410,14 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-medium flex items-center gap-2">
                         <UserCheck className="w-4 h-4" />
-                        Can act on any node
+                        {t("groups.canActOnAnyNode")}
                       </label>
                       <Switch isSelected={acceptAny} onValueChange={setAcceptAny} />
                     </div>
 
                     <div className="border-t pt-4">
                       <div className="flex items-center justify-between mb-4">
-                        <label className="text-sm font-medium">Add Members</label>
+                        <label className="text-sm font-medium">{t("groups.addMembers")}</label>
                       </div>
 
                       <div className="space-y-3">
@@ -427,17 +429,17 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
                             mail: m.email,
                             userPrincipalName: m.email
                           }))}
-                          placeholder="Search for users in your organization..."
+                          placeholder={t("groups.searchUsers")}
                         />
                         <div className="text-xs text-default-500 flex items-center gap-1">
                           <UserCheck className="w-3 h-3" />
-                          Search and select users from your Teams organization
+                          {t("groups.searchUsersDescription")}
                         </div>
                       </div>
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium">Current Members ({members.length})</label>
+                      <label className="text-sm font-medium">{t("groups.currentMembers")} ({members.length})</label>
                       <div className="space-y-2 mt-2 max-h-32 overflow-y-auto">
                         {members.map((member, index) => (
                           <div key={index} className="flex items-center justify-between p-2 bg-default-50 rounded">
@@ -446,7 +448,7 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
                                 {member.name}
                                 {member.id && (
                                   <Chip size="sm" color="success" variant="flat">
-                                    Teams User
+                                    {t("groups.teamsUser")}
                                   </Chip>
                                 )}
                               </div>
@@ -468,10 +470,10 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
 
                     <div className="flex gap-2 pt-4 border-t">
                       <Button onPress={saveGroup} color="primary" className="flex-1">
-                        {isCreateMode ? "Create Group" : "Save Changes"}
+                        {isCreateMode ? t("groups.createGroup") : t("groups.saveChanges")}
                       </Button>
                       <Button variant="bordered" onPress={cancelEdit} className="flex-1">
-                        Cancel
+                        {t("common.cancel")}
                       </Button>
                     </div>
                   </div>
@@ -479,11 +481,11 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
               ) : (
                 <div className="text-center py-8 text-default-500">
                   <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Select a group to edit or create a new one</p>
+                  <p>{t("groups.selectGroupToEdit")}</p>
                   {!isLoggedIn && (
                     <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                       <p className="text-sm text-blue-600">
-                        Log in with Teams to enable user search and notifications
+                        {t("groups.teamsLoginToEnableFeatures")}
                       </p>
                     </div>
                   )}
