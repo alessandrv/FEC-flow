@@ -1206,10 +1206,7 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
       assignmentResumeRef.current = { nodeId, formData: { ...formData }, selectedPath }
       
       // Debug feedback
-      setToastMessage(`Assignment needed for ${nextNodesNeedingResponsible.length} node(s): ${nextNodesNeedingResponsible.map(n => n.data?.label || n.id).join(', ')}`)
-      setToastType('info')
-      setToastVisible(true)
-      window.setTimeout(() => setToastVisible(false), 4000)
+     
       
       return
     }
@@ -2128,12 +2125,17 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
         size="2xl"
         scrollBehavior="outside"
         placement="center"
+        classNames={{
+          base: "max-h-[85vh]",
+          body: "overflow-visible",
+          wrapper: "overflow-visible"
+        }}
       >
         <ModalContent>
           <ModalHeader>
             <h3>{t('items.assignResponsibleTitle')}</h3>
           </ModalHeader>
-          <ModalBody className="max-h-[70vh] overflow-y-auto">
+          <ModalBody className="pb-8">
             <div className="space-y-6 pb-8">
               <p className="text-sm text-default-600">{t('items.assignResponsibleDescription')}</p>
               
