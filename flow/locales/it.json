@@ -370,7 +370,8 @@
       "cyan": "Ciano",
       "gray": "Grigio"
     },
-    "moreMembers": "+{count} altri"
+    "moreMembers": "+{count} altri",
+    "backToList": "Torna ai Gruppi"
   },
   "validation": {
     "required": "Questo campo è obbligatorio",

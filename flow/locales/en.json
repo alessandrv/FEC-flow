@@ -370,7 +370,8 @@
       "cyan": "Cyan",
       "gray": "Gray"
     },
-    "moreMembers": "+{count} more"
+    "moreMembers": "+{count} more",
+    "backToList": "Back to Groups"
   },
   "validation": {
     "required": "This field is required",
