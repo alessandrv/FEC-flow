@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, X, Users, Mail, Palette, Pencil, UserCheck, UserPlus } from "lucide-react"
+import { Plus, X, Users, Mail, Palette, Pencil, UserCheck, UserPlus, ArrowLeft } from "lucide-react"
 import {
   Button,
   Card,
@@ -371,8 +371,9 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
                   isIconOnly
                   onPress={() => setCurrentView('list')}
                   className="mr-2"
+                  title={t("groups.backToList")}
                 >
-                  <X className="w-4 h-4" />
+                  <ArrowLeft className="w-4 h-4" />
                 </Button>
                 <Users className="w-5 h-5" />
                 <span>{isCreateMode ? t("groups.createNewGroup") : t("groups.editGroup")}</span>
