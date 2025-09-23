@@ -229,13 +229,37 @@ export default function FlowTable({ flow, onBack, onEditFlow, onUpdateFlow, open
   const userCanActOnItem = (item: any): boolean => {
     try {
       if (!currentUser) return false
+      const candidates = [currentUser.mail, currentUser.userPrincipalName, currentUser.id]
+        .filter(Boolean)
+        .map(v => String(v).trim().toLowerCase()) as string[]
+      if (candidates.length === 0) return false
+
+      // First check if user is specifically assigned to any active node at runtime
+      const info = getCurrentNodesAndResponsibilities(item)
+      const perItemAssignments = (item?.data?.assignedResponsibilities) || {}
+      
+      for (const nodeInfo of info) {
+        const assignedUsers = perItemAssignments[nodeInfo.nodeId] || []
+        if (assignedUsers.length > 0) {
+          // Check if current user is in the assigned users list for this node
+          const isAssigned = assignedUsers.some((user: any) => {
+            if (typeof user === 'string') {
+              return candidates.includes(user.toLowerCase())
+            } else if (typeof user === 'object' && user.id) {
+              return candidates.includes(user.id.toLowerCase())
+            }
+            return false
+          })
+          if (isAssigned) return true
+        }
+      }
+
       const gs = Array.isArray(groups) ? groups : []
       // Accept-any groups take precedence
       const anyGroup = gs.some((g: any) => !!g?.accept_any && isUserInGroup(g))
       if (anyGroup) return true
 
       // Gather responsibilities from current active nodes
-      const info = getCurrentNodesAndResponsibilities(item)
       const respIds = new Set<string>()
       info.forEach(i => (i.responsibilities || []).forEach((rid: string) => rid && respIds.add(rid)))
       if (respIds.size === 0) return false
@@ -881,16 +905,34 @@ export default function FlowTable({ flow, onBack, onEditFlow, onUpdateFlow, open
           {
             const currentNodesInfo = getCurrentNodesAndResponsibilities(item)
             const gs = Array.isArray(groups) ? groups : []
+            const perItemAssignments = (item?.data?.assignedResponsibilities) || {}
+            
             currentNodesInfo.forEach((nodeInfo) => {
-              nodeInfo.responsibilities.forEach((respId: string) => {
-                const group = gs.find((g: any) => g.id === respId)
-                if (group?.name) {
-                  values.add(String(group.name))
-                } else {
-                  // Fallback to ID if name missing
-                  if (respId) values.add(respId)
-                }
-              })
+              // Check for user assignments first (they take priority)
+              const assignedUsers = perItemAssignments[nodeInfo.nodeId] || []
+              if (assignedUsers.length > 0) {
+                assignedUsers.forEach((user: any) => {
+                  if (typeof user === 'object' && user.displayName) {
+                    const displayName = user.givenName && user.surname 
+                      ? `${user.givenName} ${user.surname}`
+                      : user.displayName
+                    values.add(displayName)
+                  } else if (typeof user === 'string') {
+                    values.add(user) // Legacy format
+                  }
+                })
+              } else {
+                // Fall back to group responsibilities if no users assigned
+                nodeInfo.responsibilities.forEach((respId: string) => {
+                  const group = gs.find((g: any) => g.id === respId)
+                  if (group?.name) {
+                    values.add(String(group.name))
+                  } else {
+                    // Fallback to ID if name missing
+                    if (respId) values.add(respId)
+                  }
+                })
+              }
             })
             return Array.from(values).sort()
           }
@@ -937,13 +979,31 @@ export default function FlowTable({ flow, onBack, onEditFlow, onUpdateFlow, open
         {
           const currentNodesInfo = getCurrentNodesAndResponsibilities(item)
           const gs = Array.isArray(groups) ? groups : []
+          const perItemAssignments = (item?.data?.assignedResponsibilities) || {}
           const responsibilityNames: string[] = []
+          
           currentNodesInfo.forEach((nodeInfo) => {
-            nodeInfo.responsibilities.forEach((respId: string) => {
-              const group = gs.find((g: any) => g.id === respId)
-              if (group?.name) responsibilityNames.push(String(group.name))
-              else if (respId) responsibilityNames.push(respId)
-            })
+            // Check for user assignments first (they take priority)
+            const assignedUsers = perItemAssignments[nodeInfo.nodeId] || []
+            if (assignedUsers.length > 0) {
+              assignedUsers.forEach((user: any) => {
+                if (typeof user === 'object' && user.displayName) {
+                  const displayName = user.givenName && user.surname 
+                    ? `${user.givenName} ${user.surname}`
+                    : user.displayName
+                  responsibilityNames.push(displayName)
+                } else if (typeof user === 'string') {
+                  responsibilityNames.push(user) // Legacy format
+                }
+              })
+            } else {
+              // Fall back to group responsibilities if no users assigned
+              nodeInfo.responsibilities.forEach((respId: string) => {
+                const group = gs.find((g: any) => g.id === respId)
+                if (group?.name) responsibilityNames.push(String(group.name))
+                else if (respId) responsibilityNames.push(respId)
+              })
+            }
           })
           return responsibilityNames
         }
