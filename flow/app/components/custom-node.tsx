@@ -18,6 +18,7 @@ import {
   Tab,
 } from "@heroui/react"
 import ResponsibilityChip from "./responsibility-chip"
+import UserChip from "./user-chip"
 import MultiResponsibilitySelector from "./multi-responsibility-selector"
   import { useTeamsAuth } from "../providers/teams-auth"
 
@@ -358,11 +359,24 @@ const CustomNode = memo(({ data, id }: CustomNodeProps) => {
         {data.nodeType !== "convergence" && (
             <div className="m-2 mt-0 w-full">
               <div className="flex flex-wrap gap-1 justify-center">
-                {(data.responsibilities || (data.responsibility ? [data.responsibility] : [])).map(
-                  (respId: string, index: number) => (
-                    <ResponsibilityChip key={`${data.nodeType}-${id}-${index}-${respId}`} groupId={respId} />
-                  ),
-                )}
+                {(() => {
+                  // Get per-item user assignments for this node
+                  const assignedUsers = data.itemData?.assignedResponsibilities?.[id] || []
+                  const hasUserAssignments = assignedUsers.length > 0
+                  
+                  // Show user assignment chips INSTEAD of group chips if users are assigned
+                  if (hasUserAssignments) {
+                    return assignedUsers.map((user: any, userIndex: number) => (
+                      <UserChip key={`user-${id}-${userIndex}`} user={user} />
+                    ))
+                  } else {
+                    // Show group responsibility chips only if no users assigned
+                    const groupResponsibilities = data.responsibilities || (data.responsibility ? [data.responsibility] : [])
+                    return groupResponsibilities.map((respId: string, index: number) => (
+                      <ResponsibilityChip key={`${data.nodeType}-${id}-${index}-${respId}`} groupId={respId} />
+                    ))
+                  }
+                })()}
               </div>
             </div>
           )}
