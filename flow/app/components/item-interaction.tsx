@@ -61,10 +61,26 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
   const userCanActOnNode = useCallback((node: any): boolean => {
     try {
       if (!currentUser) return false
-      const candidates = [currentUser.mail, currentUser.userPrincipalName]
+      const candidates = [currentUser.mail, currentUser.userPrincipalName, currentUser.id]
         .filter(Boolean)
         .map(v => String(v).trim().toLowerCase()) as string[]
       if (candidates.length === 0) return false
+
+      // First check if user is specifically assigned to this node at runtime
+      const perItemAssignments = (item?.data?.assignedResponsibilities) || {}
+      const assignedUsers = perItemAssignments[node.id] || []
+      if (assignedUsers.length > 0) {
+        // Check if current user is in the assigned users list
+        const isAssigned = assignedUsers.some((user: any) => {
+          if (typeof user === 'string') {
+            return candidates.includes(user.toLowerCase())
+          } else if (typeof user === 'object' && user.id) {
+            return candidates.includes(user.id.toLowerCase())
+          }
+          return false
+        })
+        if (isAssigned) return true
+      }
 
       // If any group has accept_any=true and contains current user, allow
       const anyGroup = (groups || []).some((g: any) => {
@@ -90,7 +106,7 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
       })
       return ok
     } catch { return false }
-  }, [currentUser, groups])
+  }, [currentUser, groups, item])
 
   // (moved) deep-link focus effect placed after visualNodes declaration
 
