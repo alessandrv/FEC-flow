@@ -2125,64 +2125,68 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
       <Modal
         isOpen={isAssignResponsibleModalOpen}
         onClose={() => { setIsAssignResponsibleModalOpen(false); setNodesAwaitingAssignment([]); assignmentResumeRef.current = null }}
-        size="lg"
-        scrollBehavior="inside"
+        size="2xl"
+        scrollBehavior="outside"
+        placement="center"
       >
         <ModalContent>
           <ModalHeader>
-            <h3>{t('items.assignResponsibleTitle') || 'Assign responsible for next steps'}</h3>
+            <h3>{t('items.assignResponsibleTitle')}</h3>
           </ModalHeader>
-          <ModalBody>
-            <div className="space-y-4">
+          <ModalBody className="max-h-[70vh] overflow-y-auto">
+            <div className="space-y-4 pb-4">
+              <p className="text-sm text-default-600">{t('items.assignResponsibleDescription')}</p>
+              
               {nodesAwaitingAssignment.map((n: any) => (
-                <div key={n.id} className="p-3 border rounded">
-                  <div className="font-medium mb-2">{n.data?.label || n.id}</div>
-                  <div className="text-sm text-default-600 mb-3">
-                    Search and select users to assign responsibility for this step:
-                  </div>
-                  <UserSearch
-                    onUserSelect={(user) => {
-                      // Store selected users for this node
-                      const currentUsers = n._newAssignedUsers || []
-                      const isAlreadyAdded = currentUsers.some((u: any) => u.id === user.id)
-                      if (!isAlreadyAdded) {
-                        const updatedUsers = [...currentUsers, user]
-                        setNodesAwaitingAssignment((prev) => 
-                          prev.map(p => p.id === n.id ? { ...p, _newAssignedUsers: updatedUsers } : p)
-                        )
-                      }
-                    }}
-                    selectedUsers={n._newAssignedUsers || []}
-                    placeholder="Search for users to assign..."
-                  />
-                  {/* Display selected users */}
-                  {n._newAssignedUsers && n._newAssignedUsers.length > 0 && (
-                    <div className="mt-3">
-                      <div className="text-sm font-medium mb-2">Selected users:</div>
-                      <div className="space-y-1">
-                        {n._newAssignedUsers.map((user: any, idx: number) => (
-                          <div key={user.id} className="flex items-center justify-between p-2 bg-default-50 rounded text-sm">
-                            <span>{user.displayName} ({user.mail || user.userPrincipalName})</span>
-                            <Button
-                              isIconOnly
-                              size="sm"
-                              variant="light"
-                              color="danger"
-                              onPress={() => {
-                                const updatedUsers = n._newAssignedUsers.filter((_: any, i: number) => i !== idx)
-                                setNodesAwaitingAssignment((prev) => 
-                                  prev.map(p => p.id === n.id ? { ...p, _newAssignedUsers: updatedUsers } : p)
-                                )
-                              }}
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        ))}
+                <Card key={n.id} className="shadow-sm">
+                  <CardHeader className="pb-2">
+                    <h4 className="font-medium">{n.data?.label || n.id}</h4>
+                  </CardHeader>
+                  <CardBody className="pt-0">
+                    <UserSearch
+                      onUserSelect={(user) => {
+                        // Store selected users for this node
+                        const currentUsers = n._newAssignedUsers || []
+                        const isAlreadyAdded = currentUsers.some((u: any) => u.id === user.id)
+                        if (!isAlreadyAdded) {
+                          const updatedUsers = [...currentUsers, user]
+                          setNodesAwaitingAssignment((prev) => 
+                            prev.map(p => p.id === n.id ? { ...p, _newAssignedUsers: updatedUsers } : p)
+                          )
+                        }
+                      }}
+                      selectedUsers={n._newAssignedUsers || []}
+                      placeholder={t('items.searchUsersPlaceholder')}
+                    />
+                    {/* Display selected users */}
+                    {n._newAssignedUsers && n._newAssignedUsers.length > 0 && (
+                      <div className="mt-3">
+                        <div className="text-sm font-medium mb-2">{t('items.selectedUsers')}</div>
+                        <div className="space-y-1">
+                          {n._newAssignedUsers.map((user: any, idx: number) => (
+                            <div key={user.id} className="flex items-center justify-between p-2 bg-default-50 rounded text-sm">
+                              <span>{user.displayName} ({user.mail || user.userPrincipalName})</span>
+                              <Button
+                                isIconOnly
+                                size="sm"
+                                variant="light"
+                                color="danger"
+                                onPress={() => {
+                                  const updatedUsers = n._newAssignedUsers.filter((_: any, i: number) => i !== idx)
+                                  setNodesAwaitingAssignment((prev) => 
+                                    prev.map(p => p.id === n.id ? { ...p, _newAssignedUsers: updatedUsers } : p)
+                                  )
+                                }}
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </CardBody>
+                </Card>
               ))}
 
               <div className="flex gap-2 pt-4">
@@ -2194,7 +2198,7 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
                     )
                     
                     if (missingAssignments.length > 0) {
-                      setToastMessage('Please assign at least one user to each step')
+                      setToastMessage(t('items.assignAtLeastOneUser'))
                       setToastType('danger')
                       setToastVisible(true)
                       window.setTimeout(() => setToastVisible(false), 3000)
@@ -2269,9 +2273,9 @@ export default function ItemInteraction({ item, flow, onBack, onUpdateItem, deep
                     window.setTimeout(() => setToastVisible(false), 3000)
                   }
                 }}>
-                  {t('common.save') || 'Save'}
+                  {t('common.save')}
                 </Button>
-                <Button variant="bordered" onPress={() => { setIsAssignResponsibleModalOpen(false); setNodesAwaitingAssignment([]); assignmentResumeRef.current = null }}>Cancel</Button>
+                <Button variant="bordered" onPress={() => { setIsAssignResponsibleModalOpen(false); setNodesAwaitingAssignment([]); assignmentResumeRef.current = null }}>{t('common.cancel')}</Button>
               </div>
             </div>
           </ModalBody>

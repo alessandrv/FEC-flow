@@ -277,7 +277,13 @@
     "oneStep": "one step",
     "plannerNotConfigured": "Planner destination not configured for this flow. Open Settings > Planner Destination to pick a Plan and Bucket.",
     "plannerTaskCreated": "Planner task created",
-    "plannerTaskFailed": "Planner task failed: {error}"
+    "plannerTaskFailed": "Planner task failed: {error}",
+    "assignResponsibleTitle": "Assign Responsible Users",
+    "assignResponsibleDescription": "The following nodes need to be assigned to specific users before proceeding:",
+    "searchUsersPlaceholder": "Search for users to assign...",
+    "selectedUsers": "Selected users:",
+    "assignAtLeastOneUser": "Please assign at least one user to each step",
+    "saveResponsibilitiesFailed": "Failed to save responsibilities"
   },
   "planner": {
     "destination": "Planner Setup",

@@ -277,7 +277,13 @@
     "oneStep": "uno step",
     "plannerNotConfigured": "Destinazione Planner non configurata per questo flusso. Apri Impostazioni > Destinazione Planner per scegliere un Piano e un Bucket.",
     "plannerTaskCreated": "Attività Planner creata",
-    "plannerTaskFailed": "Creazione attività Planner fallita: {error}"
+    "plannerTaskFailed": "Creazione attività Planner fallita: {error}",
+    "assignResponsibleTitle": "Assegna Utenti Responsabili",
+    "assignResponsibleDescription": "I seguenti nodi devono essere assegnati a utenti specifici prima di procedere:",
+    "searchUsersPlaceholder": "Cerca utenti da assegnare...",
+    "selectedUsers": "Utenti selezionati:",
+    "assignAtLeastOneUser": "Assegna almeno un utente a ogni passaggio",
+    "saveResponsibilitiesFailed": "Impossibile salvare le responsabilità"
   },
   "planner": {
     "destination": "Setup Planner",
