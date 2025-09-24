@@ -383,121 +383,148 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
               </p>
             </ModalHeader>
             <ModalBody>
-              <div className="space-y-4 max-w-2xl mx-auto">
-                <Input
-                  label={t("groups.groupName")}
-                  value={groupName}
-                  onValueChange={setGroupName}
-                  placeholder={t("groups.enterGroupName")}
-                />
-
-                <div>
-                  <label className="text-sm font-medium flex items-center gap-2 mb-2">
-                    <Palette className="w-4 h-4" />
-                    {t("groups.groupColor")}
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {colorOptions.map((color) => (
-                      <Button
-                        key={color.value}
-                        isIconOnly
-                        size="sm"
-                        variant={groupColor === color.value ? "solid" : "bordered"}
-                        onPress={() => setGroupColor(color.value)}
-                        title={t(color.name)}
-                        className={`relative ${
-                          groupColor === color.value ? "ring-2 ring-offset-2 ring-blue-500" : ""
-                        }`}
-                      >
-                        <div 
-                          className={`w-4 h-4 rounded-full ${
-                            color.value === "primary" ? "bg-blue-500" :
-                            color.value === "success" ? "bg-green-500" :
-                            color.value === "secondary" ? "bg-purple-500" :
-                            color.value === "danger" ? "bg-red-500" :
-                            color.value === "warning" ? "bg-orange-500" :
-                            color.value === "yellow" ? "bg-yellow-400" :
-                            color.value === "pink" ? "bg-pink-400" :
-                            color.value === "indigo" ? "bg-indigo-400" :
-                            color.value === "emerald" ? "bg-emerald-400" :
-                            color.value === "rose" ? "bg-rose-400" :
-                            color.value === "cyan" ? "bg-cyan-400" :
-                            "bg-gray-400"
-                          }`}
-                        />
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                <Divider />
-
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium flex items-center gap-2">
-                    <UserCheck className="w-4 h-4" />
-                    {t("groups.canActOnAnyNode")}
-                  </label>
-                  <Switch isSelected={acceptAny} onValueChange={setAcceptAny} />
-                </div>
-
-                <div className="border-t pt-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <label className="text-sm font-medium">{t("groups.addMembers")}</label>
-                  </div>
-
-                  <div className="space-y-3">
-                    <UserSearch
-                      onUserSelect={handleUserSelect}
-                      selectedUsers={members.filter(m => m.id).map(m => ({ 
-                        id: m.id!, 
-                        displayName: m.name, 
-                        mail: m.email,
-                        userPrincipalName: m.email
-                      }))}
-                      placeholder={t("groups.searchUsers")}
+              <div className="space-y-6">
+                {/* Group Settings Section */}
+                <div className="bg-default-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                    <Palette className="w-5 h-5" />
+                    {t("groups.groupSettings")}
+                  </h4>
+                  
+                  <div className="space-y-4">
+                    <Input
+                      label={t("groups.groupName")}
+                      value={groupName}
+                      onValueChange={setGroupName}
+                      placeholder={t("groups.enterGroupName")}
                     />
-                    <div className="text-xs text-default-500 flex items-center gap-1">
-                      <UserCheck className="w-3 h-3" />
-                      {t("groups.searchUsersDescription")}
+
+                    <div>
+                      <label className="text-sm font-medium flex items-center gap-2 mb-3">
+                        <Palette className="w-4 h-4" />
+                        {t("groups.groupColor")}
+                      </label>
+                      <div className="flex flex-wrap gap-3">
+                        {colorOptions.map((color) => (
+                          <Button
+                            key={color.value}
+                            isIconOnly
+                            size="md"
+                            variant={groupColor === color.value ? "solid" : "bordered"}
+                            onPress={() => setGroupColor(color.value)}
+                            title={t(color.name)}
+                            className={`relative transition-all ${
+                              groupColor === color.value ? "ring-2 ring-offset-2 ring-blue-500 scale-110" : ""
+                            }`}
+                          >
+                            <div 
+                              className={`w-5 h-5 rounded-full ${
+                                color.value === "primary" ? "bg-blue-500" :
+                                color.value === "success" ? "bg-green-500" :
+                                color.value === "secondary" ? "bg-purple-500" :
+                                color.value === "danger" ? "bg-red-500" :
+                                color.value === "warning" ? "bg-orange-500" :
+                                color.value === "yellow" ? "bg-yellow-400" :
+                                color.value === "pink" ? "bg-pink-400" :
+                                color.value === "indigo" ? "bg-indigo-400" :
+                                color.value === "emerald" ? "bg-emerald-400" :
+                                color.value === "rose" ? "bg-rose-400" :
+                                color.value === "cyan" ? "bg-cyan-400" :
+                                "bg-gray-400"
+                              }`}
+                            />
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <UserCheck className="w-4 h-4" />
+                        {t("groups.canActOnAnyNode")}
+                      </label>
+                      <Switch isSelected={acceptAny} onValueChange={setAcceptAny} />
                     </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-sm font-medium">{t("groups.currentMembers")} ({members.length})</label>
-                  <div className="space-y-2 mt-2 max-h-32 overflow-y-auto">
-                    {members.map((member, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-default-50 rounded">
-                        <div className="flex-1">
-                          <div className="text-sm font-medium flex items-center gap-2">
-                            {member.name}
-                            {member.id && (
-                              <Chip size="sm" color="success" variant="flat">
-                                {t("groups.teamsUser")}
-                              </Chip>
-                            )}
-                          </div>
-                          <div className="text-xs text-default-500">{member.email}</div>
+                {/* Members Management Section */}
+                <div className="bg-default-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    {t("groups.membersManagement")} ({members.length})
+                  </h4>
+
+                  <div className="space-y-4">
+                    {/* Add Members */}
+                    <div className="bg-white rounded-lg p-4 border">
+                      <label className="text-sm font-medium mb-3 block">{t("groups.addMembers")}</label>
+                      <div className="space-y-3">
+                        <UserSearch
+                          onUserSelect={handleUserSelect}
+                          selectedUsers={members.filter(m => m.id).map(m => ({ 
+                            id: m.id!, 
+                            displayName: m.name, 
+                            mail: m.email,
+                            userPrincipalName: m.email
+                          }))}
+                          placeholder={t("groups.searchUsers")}
+                        />
+                        <div className="text-xs text-default-500 flex items-center gap-1">
+                          <UserCheck className="w-3 h-3" />
+                          {t("groups.searchUsersDescription")}
                         </div>
-                        <Button
-                          isIconOnly
-                          variant="light"
-                          size="sm"
-                          color="danger"
-                          onPress={() => removeMember(index)}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Current Members List */}
+                    <div className="bg-white rounded-lg border">
+                      <div className="p-4 border-b">
+                        <label className="text-sm font-medium">{t("groups.currentMembers")}</label>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto">
+                        {members.length === 0 ? (
+                          <div className="p-8 text-center text-default-400">
+                            <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">{t("groups.noMembersYet")}</p>
+                          </div>
+                        ) : (
+                          members.map((member, index) => (
+                            <div key={index} className="flex items-center justify-between p-4 hover:bg-default-50 border-b last:border-b-0">
+                              <div className="flex-1">
+                                <div className="text-sm font-medium flex items-center gap-2">
+                                  {member.name}
+                                  {member.id && (
+                                    <Chip size="sm" color="success" variant="flat">
+                                      {t("groups.teamsUser")}
+                                    </Chip>
+                                  )}
+                                </div>
+                                <div className="text-xs text-default-500 mt-1">{member.email}</div>
+                              </div>
+                              <Button
+                                isIconOnly
+                                variant="light"
+                                size="sm"
+                                color="danger"
+                                onPress={() => removeMember(index)}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex gap-2 pt-4 border-t">
-                  <Button onPress={saveGroup} color="primary" className="flex-1">
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-2">
+                  <Button onPress={saveGroup} color="primary" size="lg" className="flex-1">
                     {isCreateMode ? t("groups.createGroup") : t("groups.saveChanges")}
                   </Button>
-                  <Button variant="bordered" onPress={() => setCurrentView('list')} className="flex-1">
+                  <Button variant="bordered" onPress={() => setCurrentView('list')} size="lg" className="flex-1">
                     {t("common.cancel")}
                   </Button>
                 </div>

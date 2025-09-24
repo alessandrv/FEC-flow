@@ -371,7 +371,10 @@
       "gray": "Gray"
     },
     "moreMembers": "+{count} more",
-    "backToList": "Back to Groups"
+    "backToList": "Back to Groups",
+    "groupSettings": "Group Settings",
+    "membersManagement": "Members Management",
+    "noMembersYet": "No members added yet"
   },
   "validation": {
     "required": "This field is required",

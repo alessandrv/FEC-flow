@@ -371,7 +371,10 @@
       "gray": "Grigio"
     },
     "moreMembers": "+{count} altri",
-    "backToList": "Torna ai Gruppi"
+    "backToList": "Torna ai Gruppi",
+    "groupSettings": "Impostazioni Gruppo",
+    "membersManagement": "Gestione Membri",
+    "noMembersYet": "Nessun membro ancora aggiunto"
   },
   "validation": {
     "required": "Questo campo è obbligatorio",
