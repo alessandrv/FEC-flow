@@ -295,7 +295,12 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
 
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {groups.map((group) => (
-                    <Card key={group.id} className="cursor-pointer shadow-none transition-shadow hover:shadow-sm">
+                    <Card 
+                      key={group.id} 
+                      isPressable
+                      className="border-2 border-default-200 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary-300 hover:scale-[1.02] active:scale-[0.98]" 
+                      onPress={() => startEditGroup(group)}
+                    >
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-start w-full">
                           <div className="flex items-center gap-2">
@@ -323,6 +328,7 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
                               variant="light"
                               size="sm"
                               onPress={() => startEditGroup(group)}
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <Pencil className="w-3 h-3" />
                             </Button>
@@ -332,6 +338,7 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
                               size="sm"
                               color="danger"
                               onPress={() => deleteGroup(group.id)}
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <X className="w-3 h-3" />
                             </Button>
@@ -494,11 +501,7 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
                               <div className="flex-1">
                                 <div className="text-sm font-medium flex items-center gap-2">
                                   {member.name}
-                                  {member.id && (
-                                    <Chip size="sm" color="success" variant="flat">
-                                      {t("groups.teamsUser")}
-                                    </Chip>
-                                  )}
+                                 
                                 </div>
                                 <div className="text-xs text-default-500 mt-1">{member.email}</div>
                               </div>

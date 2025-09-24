@@ -374,7 +374,8 @@
     "backToList": "Torna ai Gruppi",
     "groupSettings": "Impostazioni Gruppo",
     "membersManagement": "Gestione Membri",
-    "noMembersYet": "Nessun membro ancora aggiunto"
+    "noMembersYet": "Nessun membro ancora aggiunto",
+    "clickToEdit": "Clicca per modificare"
   },
   "validation": {
     "required": "Questo campo è obbligatorio",

@@ -374,7 +374,8 @@
     "backToList": "Back to Groups",
     "groupSettings": "Group Settings",
     "membersManagement": "Members Management",
-    "noMembersYet": "No members added yet"
+    "noMembersYet": "No members added yet",
+    "clickToEdit": "Click to edit"
   },
   "validation": {
     "required": "This field is required",
