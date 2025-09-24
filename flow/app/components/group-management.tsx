@@ -298,7 +298,7 @@ export default function GroupManagement({ isOpen, onClose }: GroupManagementProp
                     <Card 
                       key={group.id} 
                       isPressable
-                      className="w-full m-2 border-2 border-default-200 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary-300 hover:scale-[1.02] active:scale-[0.98]" 
+                      className="w-full m-2 border-2 border-default-200 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary-300 " 
                       onPress={() => startEditGroup(group)}
                     >
                       <CardHeader className="pb-2">
